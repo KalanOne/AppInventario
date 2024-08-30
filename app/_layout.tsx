@@ -1,37 +1,77 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { useState } from "react";
+import { Button, Dialog, FAB, Portal, Text } from "react-native-paper";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import Progress from "@/components/general/Progress";
+import { Material3ThemeProvider } from "@/components/providers/Material3ThemeProvider";
+import { ThemeEditor } from "@/components/ThemeEditor";
+import { useProgressStore } from "@/stores/progress";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useCameraPermissions } from "expo-camera";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  const [visible, setVisible] = useState(false);
+  const progresses = useProgressStore((state) => state.progresses);
+  const [permission, requestPermission] = useCameraPermissions();
+  // useLanguage();
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+  function toggleModal() {
+    setVisible(!visible);
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <Material3ThemeProvider>
+        {progresses.length > 0 && <Progress />}
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+        {permission && !permission.granted && (
+          <Portal>
+            <Dialog visible={true}>
+              <Dialog.Title>Camera Permission</Dialog.Title>
+              <Dialog.Content>
+                {permission.canAskAgain && (
+                  <Text>
+                    This app needs camera permission to scan QR codes.
+                  </Text>
+                )}
+                {!permission.canAskAgain && (
+                  <Text>
+                    You have denied camera permission. Please go to settings and
+                    allow camera permission. Then restart the app.
+                  </Text>
+                )}
+              </Dialog.Content>
+              {permission.canAskAgain && (
+                <Dialog.Actions>
+                  <Button onPress={requestPermission}>Accept</Button>
+                </Dialog.Actions>
+              )}
+            </Dialog>
+          </Portal>
+        )}
+        <Portal>
+          <Dialog visible={visible} onDismiss={toggleModal}>
+            <Dialog.Title>Change theme</Dialog.Title>
+            <Dialog.Content>
+              <ThemeEditor />
+            </Dialog.Content>
+          </Dialog>
+        </Portal>
+        <FAB
+          icon="palette"
+          style={{
+            position: "absolute",
+            margin: 16,
+            right: 0,
+            bottom: 45,
+          }}
+          onPress={toggleModal}
+        />
+      </Material3ThemeProvider>
+    </QueryClientProvider>
   );
 }
