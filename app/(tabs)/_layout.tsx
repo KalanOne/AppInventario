@@ -9,31 +9,19 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.colors.primary,
-        headerShown: false,
+        headerShown: true,
         tabBarStyle: {
           backgroundColor: colors.colors.background,
         },
       }}
     >
       <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "home" : "home-outline"}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="cameras/scanCamera"
         options={{
           // href: null,
-          tabBarStyle: {
-            display: "none",
-          },
+          // tabBarStyle: {
+          //   display: "none",
+          // },
           title: "Camera",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon

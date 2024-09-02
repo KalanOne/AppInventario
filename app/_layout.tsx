@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Dialog, FAB, Portal, Text } from "react-native-paper";
 
 import Progress from "@/components/general/Progress";
@@ -8,6 +8,7 @@ import { ThemeEditor } from "@/components/ThemeEditor";
 import { useProgressStore } from "@/stores/progress";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCameraPermissions } from "expo-camera";
+import { NotificationBar } from "@/components/general/NotificationBar";
 
 const queryClient = new QueryClient();
 
@@ -21,11 +22,16 @@ export default function RootLayout() {
     setVisible(!visible);
   }
 
+  useEffect(() => {
+    requestPermission();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <Material3ThemeProvider>
+      <Material3ThemeProvider sourceColor={"#339cff"}>
         {progresses.length > 0 && <Progress />}
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack screenOptions={{ headerShown: true }}>
+          <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
         </Stack>
         {permission && !permission.granted && (
@@ -45,11 +51,9 @@ export default function RootLayout() {
                   </Text>
                 )}
               </Dialog.Content>
-              {permission.canAskAgain && (
-                <Dialog.Actions>
-                  <Button onPress={requestPermission}>Accept</Button>
-                </Dialog.Actions>
-              )}
+              <Dialog.Actions>
+                <Button onPress={requestPermission}>Accept</Button>
+              </Dialog.Actions>
             </Dialog>
           </Portal>
         )}
@@ -70,7 +74,9 @@ export default function RootLayout() {
             bottom: 45,
           }}
           onPress={toggleModal}
+          visible={false}
         />
+        <NotificationBar />
       </Material3ThemeProvider>
     </QueryClientProvider>
   );

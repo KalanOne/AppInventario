@@ -1,6 +1,6 @@
 import { BarcodeScanningResult, CameraType, CameraView } from "expo-camera";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { StyleSheet } from "react-native";
 import { Appbar, Dialog, IconButton, Portal, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -34,11 +34,7 @@ export default function SanCamera() {
   }
 
   return (
-    <Flex
-      backgroundColor={color.colors.background}
-      // style={{ paddingTop: insets.top }}
-      flex={1}
-    >
+    <Flex backgroundColor={color.colors.background} flex={1}>
       <Appbar.Header mode="center-aligned">
         <Appbar.BackAction onPress={handleBackPress} />
         <Appbar.Content title="Camera" />
