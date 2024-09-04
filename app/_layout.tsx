@@ -12,6 +12,11 @@ import { NotificationBar } from "@/components/general/NotificationBar";
 
 const queryClient = new QueryClient();
 
+export const unstable_settings = {
+// Ensure any route can link back to `/`
+initialRouteName: 'index',
+};
+
 export default function RootLayout() {
   const [visible, setVisible] = useState(false);
   const progresses = useProgressStore((state) => state.progresses);
@@ -26,11 +31,12 @@ export default function RootLayout() {
     requestPermission();
   }, []);
 
+
   return (
     <QueryClientProvider client={queryClient}>
       <Material3ThemeProvider sourceColor={"#339cff"}>
         {progresses.length > 0 && <Progress />}
-        <Stack screenOptions={{ headerShown: true }}>
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
         </Stack>

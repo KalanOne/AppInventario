@@ -1,35 +1,55 @@
 import { Flex } from "@/components/Flex";
 import { useAppTheme } from "@/components/providers/Material3ThemeProvider";
-import { useEffect } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { ScrollView, StyleSheet } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { StyleSheet } from "react-native";
+import { Button, Text } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { CTextInput } from "@/components/form/CTextInput";
+import { useCrudMutationF } from "@/hooks/crud";
 
-let paddingTop = 0;
+import { loginApi } from "@/api/login.api";
+import { router } from "expo-router";
+import { useStorageState } from "@/hooks/useStorageState";
+import { useSessionStore } from "@/stores/sessionStore";
 
 export default function Login() {
   const color = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const [[_isLoadingJwt, _jwt], setJwt] = useStorageState(
+    process.env.EXPO_PUBLIC_TOKEN_SECRET ?? "TOKEN_SECRET"
+  );
+  const [[_isLoadingEmail, _email], setEmail] = useStorageState(
+    process.env.EXPO_PUBLIC_EMAIL_SECRET ?? "EMAIL_SECRET"
+  );
+  const signIn = useSessionStore((state) => state.signIn);
 
   const loginForm = useForm({
     defaultValues: loginDefaultValues,
     resolver: zodResolver(loginSchema),
   });
 
-  async function login(values: LoginSchemaType) {
-    console.log(values);
-  }
+  const [emailForm] = useWatch({ control: loginForm.control, name: ["email"] });
 
-  useEffect(() => {
-    paddingTop = insets.top;
-  }, [insets]);
+  const loginMutation = useCrudMutationF(loginApi, "login", "custom", {
+    onSuccess: (response) => {
+      if (response == undefined) { return; };
+      signIn(emailForm, response.access_token);
+      setJwt(response.access_token);
+      setEmail(emailForm);
+      router.replace({ pathname: "/home" });
+    },
+    successNotification: {
+      message: "Inicio de sesión exitoso",
+    },
+  });
+
+  async function login(values: LoginSchemaType) {
+    loginMutation.mutate({
+      data: values,
+      extras: undefined,
+    });
+  }
 
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
@@ -39,11 +59,12 @@ export default function Login() {
         </Text>
         <FormProvider {...loginForm}>
           <Flex style={styles.inputsContainer}>
-            <CTextInput name="email" label="Email" />
+            <CTextInput name="email" label="Email" autoCapitalize="none" />
             <CTextInput
               name="password"
               label="Password"
               secureTextEntry={true}
+              autoCapitalize="none"
             />
           </Flex>
           <Flex align="center">

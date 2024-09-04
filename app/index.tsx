@@ -13,7 +13,7 @@ export default function Index() {
   const insets = useSafeAreaInsets();
   const color = useAppTheme();
 
-  const [[isLoadingJwt, jwt], _setJwt] = useStorageState(
+  const [[isLoadingJwt, jwt], _setJwt, reloadJWT] = useStorageState(
     process.env.EXPO_PUBLIC_TOKEN_SECRET ?? "TOKEN_SECRET"
   );
   const [[isLoadingEmail, email], _setEmail] = useStorageState(
@@ -22,24 +22,27 @@ export default function Index() {
 
   const signIn = useSessionStore((state) => state.signIn);
   const signOut = useSessionStore((state) => state.signOut);
+  const session = useSessionStore((state) => state.session);
 
   function handleContinue() {
     if (jwt && email) {
-      router.push({ pathname: "/(tabs)home" });
+      router.navigate({ pathname: "/home" });
     } else {
       router.push({ pathname: "/login" });
     }
   }
 
   useEffect(() => {
-    if (isLoadingJwt === false && isLoadingEmail === false) {
-      if (jwt && email) {
-        signIn(email, jwt);
-      } else {
-        signOut();
-      }
+    if (jwt && email) {
+      signIn(email, jwt);
+    } else if (!jwt && !email) {
+      signOut();
     }
-  }, [isLoadingJwt, isLoadingEmail]);
+  }, [jwt, email]);
+
+  useEffect(() => {
+    reloadJWT();
+  }, [session]);
 
   return (
     <Flex
@@ -55,7 +58,8 @@ export default function Index() {
         Bienvenido de nuevo a Inventario, la aplicación de inventario de la
         empresa.
       </Text>
-      <Button mode="contained" onPress={handleContinue} icon={"home-variant"}>
+      <Button mode="contained" onPress={handleContinue} icon={"home-variant"}
+        disabled={isLoadingJwt || isLoadingEmail}>
         Empezar
       </Button>
     </Flex>

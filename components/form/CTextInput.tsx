@@ -51,7 +51,6 @@ export function CTextInput({
               ) : undefined
             }
           />
-          <Text>{JSON.stringify(secureTextEntry)}</Text>
           {fieldState.invalid && (
             <HelperText
               type="error"

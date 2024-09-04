@@ -1,5 +1,6 @@
 import { Notification, useNotification } from "@/stores/notificationStore";
 import { useEffect, useState } from "react";
+import { GestureResponderEvent } from "react-native";
 import { Button, Snackbar } from "react-native-paper";
 import { $RemoveChildren } from "react-native-paper/lib/typescript/types";
 
@@ -14,46 +15,48 @@ export function NotificationBar() {
     ($RemoveChildren<typeof Button> & { label: string }) | undefined
   >();
 
+  function handleClose() {
+    setOpen(false);
+    setCurrentNotification(undefined);
+  }
+
+  function handleExited() {
+    setCurrentNotification(undefined);
+  }
+
   useEffect(() => {
     if (notifications.length && !currentNotification) {
       setCurrentNotification({ ...notifications[0] });
       if (notifications[0].action) {
         setAction({
           label: notifications[0].action.label,
-          onPress: notifications[0].action.onClick,
+          onPress: (_e: GestureResponderEvent) => {
+            notifications[0].action?.onClick();
+            handleClose();
+          },
         });
       }
       popNotification();
       setOpen(true);
     } else if (notifications.length && currentNotification && open) {
       setOpen(false);
+      setCurrentNotification(undefined);
     }
   }, [notifications, currentNotification, open]);
-
-  const handleClose = () =>
-    // _event: React.SyntheticEvent | Event,
-    // reason?: string
-    {
-      // if (reason === "clickaway") {
-      //   return;
-      // }
-      setOpen(false);
-    };
-
-  const handleExited = () => {
-    setCurrentNotification(undefined);
-  };
 
   return (
     <Snackbar
       key={currentNotification ? currentNotification.key : undefined}
       visible={open}
-      // anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       onDismiss={handleClose}
-      // TransitionProps={{ onExited: handleExited }}
       action={action}
+      duration={currentNotification?.duration ?? 5000}
+      icon={"progress-close"}
+      onIconPress={handleClose}
     >
-      {currentNotification ? currentNotification.message : undefined}
+      {currentNotification
+        ? `${currentNotification.code ?? ""}${currentNotification.code ? " - " : ""}${currentNotification.message}`
+        : undefined}
     </Snackbar>
   );
 }

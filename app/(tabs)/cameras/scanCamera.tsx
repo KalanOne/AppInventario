@@ -2,8 +2,7 @@ import { BarcodeScanningResult, CameraType, CameraView } from "expo-camera";
 import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet } from "react-native";
-import { Appbar, Dialog, IconButton, Portal, Text } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Appbar, Dialog, IconButton, Portal, Snackbar, Text } from "react-native-paper";
 
 import { Flex } from "@/components/Flex";
 import { useAppTheme } from "@/components/providers/Material3ThemeProvider";
@@ -12,7 +11,6 @@ export default function SanCamera() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [scanningResult, setScanningResult] = useState<BarcodeScanningResult>();
   const [visible, setVisible] = useState(false);
-  const insets = useSafeAreaInsets();
   const color = useAppTheme();
 
   function toggleCameraFacing() {
@@ -51,6 +49,12 @@ export default function SanCamera() {
             onPress={toggleCameraFacing}
           />
         </Flex>
+        <Snackbar
+          visible={true}
+          onDismiss={() => {}}
+        >
+          se ve?
+        </Snackbar>
       </CameraView>
       <Portal>
         <Dialog visible={visible} onDismiss={togglePortal}>

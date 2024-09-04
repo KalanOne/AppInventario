@@ -118,10 +118,10 @@ interface UseCrudDeleteMutationOptions<MessageResponse> {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-interface UseCrudMutationOptionsF<ResponseType, MessageResponse> {
+interface UseCrudMutationOptionsF<ResponseType = any> {
   successNotification?: Notification;
   errorNotification?: Notification;
-  onSuccess?: (response: ResponseType | MessageResponse) => void;
+  onSuccess?: (response: ResponseType) => void;
   onError?: (error: AxiosError) => void;
   customName?: string;
 }
@@ -145,7 +145,7 @@ function useCrudMutationF<
   ) => Promise<ResponseType>,
   name: string,
   kind: KindType,
-  options?: UseCrudMutationOptionsF<ResponseType, MessageResponse>
+  options?: UseCrudMutationOptionsF<ResponseType>
 ) {
   const queryClient = useQueryClient();
   const addNotification = useNotification((state) => state.addNotification);
@@ -159,7 +159,7 @@ function useCrudMutationF<
       ResponseType,
       ApiFunctionType<KindType, SchemaType, E>
     >,
-    onSuccess: async (response: ResponseType | MessageResponse) => {
+    onSuccess: async (response: ResponseType) => {
       if (options?.successNotification) {
         addNotification(options.successNotification);
       } else {
@@ -169,24 +169,30 @@ function useCrudMutationF<
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
+      console.log("response1", response);
       if (options?.onSuccess) {
+        console.log("response2", response);
         options.onSuccess(response);
       }
     },
     onError: (error: AxiosError) => {
       const errorData: any = error.response?.data;
-      if (errorData.error.message) {
+      if (errorData?.message) {
+        console.log("errorData", errorData);
         addNotification({
-          message: errorData.error.message,
-          code: errorData.error.code,
+          message: errorData.message,
+          code: error.status ? error.status.toString() : "NA",
         });
+        if (options?.onError) {
+          options.onError(error);
+        }
         return;
       }
       if (options?.errorNotification) {
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
+          message: "Error - " + error.status,
           code: "",
         });
       }
