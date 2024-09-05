@@ -13,8 +13,8 @@ import { NotificationBar } from "@/components/general/NotificationBar";
 const queryClient = new QueryClient();
 
 export const unstable_settings = {
-// Ensure any route can link back to `/`
-initialRouteName: 'index',
+  // Ensure any route can link back to `/`
+  initialRouteName: 'index',
 };
 
 export default function RootLayout() {

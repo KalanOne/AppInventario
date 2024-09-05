@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 import {
   MutateOptions,
@@ -8,8 +8,8 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-} from "@tanstack/react-query";
-import { AxiosError } from "axios";
+} from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 
 import {
   CreateApiFunctionParams,
@@ -17,10 +17,10 @@ import {
   GetApiFunctionParams,
   PostApiFunctionParams,
   UpdateApiFunctionParams,
-} from "@/types/api";
-import { MessageResponse } from "@/types/response";
-import { useProgressQuery, useProgressMutation } from "./progress";
-import { Notification, useNotification } from "@/stores/notificationStore";
+} from '@/types/api';
+import { MessageResponse } from '@/types/response';
+import { useProgressQuery, useProgressMutation } from './progress';
+import { Notification, useNotification } from '@/stores/notificationStore';
 
 export {
   useCrud,
@@ -39,13 +39,26 @@ interface MutationParams {
 }
 
 function useCrud<T>() {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [filters, setFilters] = useState(new URLSearchParams());
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [current, setCurrent] = useState<T>();
+  const [total, setTotal] = useState(0);
+  const [numberOfItemsPerPageList, setNumberOfItemsPerPageList] = useState([
+    5, 10, 15, 20,
+  ]);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const from = page * itemsPerPage;
+  const to = Math.min((page + 1) * itemsPerPage, total);
+  const numberOfPages = Math.ceil(total / itemsPerPage);
+
+  function onItemsPerPageChange(itemsPerPage: number) {
+    setItemsPerPage(itemsPerPage);
+    setPage(0);
+  }
 
   return {
     page,
@@ -62,6 +75,16 @@ function useCrud<T>() {
     setFilterModalOpen,
     current,
     setCurrent,
+    itemsPerPage,
+    setItemsPerPage,
+    total,
+    setTotal,
+    from,
+    to,
+    numberOfItemsPerPageList,
+    setNumberOfItemsPerPageList,
+    onItemsPerPageChange,
+    numberOfPages,
   };
 }
 
@@ -69,6 +92,7 @@ interface UseCrudQueryParams<E, T> {
   apiFunction: (params: GetApiFunctionParams<E>) => T;
   name: string;
   page: number;
+  limit: number;
   search: string;
   filters: URLSearchParams;
   keepPrevious: boolean;
@@ -79,6 +103,7 @@ function useCrudQuery<E, T>({
   apiFunction,
   name,
   page,
+  limit,
   search,
   filters,
   keepPrevious,
@@ -86,12 +111,13 @@ function useCrudQuery<E, T>({
 }: UseCrudQueryParams<E, T>) {
   const query = useQuery({
     placeholderData: keepPrevious ? keepPreviousData : undefined,
-    queryKey: [name, page, search, filters.toString(), extras],
+    queryKey: [name, page, limit, search, filters.toString(), extras],
     queryFn: () => {
       return apiFunction({
         params: {
           page: page,
-          search: search !== "" ? search : undefined,
+          limit: limit,
+          search: search !== '' ? search : undefined,
           ...Object.fromEntries(filters),
         },
         extras: extras,
@@ -126,19 +152,19 @@ interface UseCrudMutationOptionsF<ResponseType = any> {
   customName?: string;
 }
 
-type ApiFunctionType<KindType, SchemaType, E> = KindType extends "create"
+type ApiFunctionType<KindType, SchemaType, E> = KindType extends 'create'
   ? CreateApiFunctionParams<SchemaType, E>
-  : KindType extends "update"
-  ? UpdateApiFunctionParams<SchemaType, E>
-  : KindType extends "delete"
-  ? DeleteApiFunctionParams<E>
-  : PostApiFunctionParams<SchemaType, E>;
+  : KindType extends 'update'
+    ? UpdateApiFunctionParams<SchemaType, E>
+    : KindType extends 'delete'
+      ? DeleteApiFunctionParams<E>
+      : PostApiFunctionParams<SchemaType, E>;
 
 function useCrudMutationF<
-  KindType extends "create" | "update" | "delete" | "custom",
+  KindType extends 'create' | 'update' | 'delete' | 'custom',
   ResponseType,
   SchemaType,
-  E
+  E,
 >(
   apiFunction: (
     params: ApiFunctionType<KindType, SchemaType, E>
@@ -164,24 +190,21 @@ function useCrudMutationF<
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
-      console.log("response1", response);
       if (options?.onSuccess) {
-        console.log("response2", response);
         options.onSuccess(response);
       }
     },
     onError: (error: AxiosError) => {
       const errorData: any = error.response?.data;
       if (errorData?.message) {
-        console.log("errorData", errorData);
         addNotification({
           message: errorData.message,
-          code: error.status ? error.status.toString() : "NA",
+          code: error.status ? error.status.toString() : 'NA',
         });
         if (options?.onError) {
           options.onError(error);
@@ -192,8 +215,8 @@ function useCrudMutationF<
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error - " + error.status,
-          code: "",
+          message: 'Error - ' + error.status,
+          code: '',
         });
       }
       if (options?.onError) {
@@ -240,8 +263,8 @@ function useCrudCreateMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -262,8 +285,8 @@ function useCrudCreateMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -296,8 +319,8 @@ function useCrudUpdateMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -318,8 +341,8 @@ function useCrudUpdateMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -352,8 +375,8 @@ function useCrudDeleteMutation<T = number | string>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -374,8 +397,8 @@ function useCrudDeleteMutation<T = number | string>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -409,8 +432,8 @@ function useCrudCustomMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -431,8 +454,8 @@ function useCrudCustomMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {

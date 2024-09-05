@@ -18,6 +18,7 @@ export function NotificationBar() {
   function handleClose() {
     setOpen(false);
     setCurrentNotification(undefined);
+    setAction(undefined);
   }
 
   function handleExited() {
@@ -41,6 +42,7 @@ export function NotificationBar() {
     } else if (notifications.length && currentNotification && open) {
       setOpen(false);
       setCurrentNotification(undefined);
+      setAction(undefined);
     }
   }, [notifications, currentNotification, open]);
 

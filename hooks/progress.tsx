@@ -25,10 +25,8 @@ function useProgressMutation(
 ) {
   const addProgress = useProgressStore((state) => state.addProgress);
   const removeProgress = useProgressStore((state) => state.removeProgress);
-  console.log("mutation.isPending", mutation.isPending);
 
   useEffect(() => {
-    console.log("mutation.isPending", mutation.isPending);
     if (mutation.isPending) {
       addProgress(id);
     } else {

@@ -1,15 +1,19 @@
 import { FC } from 'react';
 import { ThemedView } from '../ThemedView';
-import { ActivityIndicator, Text } from 'react-native-paper';
-import { useProgressStore } from '@/stores/progress';
+import { ActivityIndicator } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Flex } from '../Flex';
+import { useAppTheme } from '../providers/Material3ThemeProvider';
+import { HextoRGBA } from '@/utils/color';
 
 
 
 const Progress: FC = () => {
-  const progresses = useProgressStore((state) => state.progresses);
-
+  const insets = useSafeAreaInsets();
+  const color = useAppTheme();
+  const backgroundColor = HextoRGBA(color.colors.background, 0.5);
   return (
-    <ThemedView
+    <Flex
       style={{
         position: 'absolute',
         top: 0,
@@ -17,19 +21,13 @@ const Progress: FC = () => {
         right: 0,
         height: "100%",
         justifyContent: 'center',
-        // backgroundColor: 'rgba(0, 0, 0, 0.1)',
-        opacity: 0.5,
         zIndex: 99999,
+        paddingTop: insets.top,
+        backgroundColor: backgroundColor
       }}
     >
-      <Text>
-        {progresses.length} task{progresses.length > 1 ? 's' : ''} in progress
-      </Text>
-      <Text>
-        {progresses.join(', ')}
-      </Text>
-      <ActivityIndicator animating={true} />
-    </ThemedView>
+      <ActivityIndicator animating={true} size={'large'} />
+    </Flex>
   );
 };
 

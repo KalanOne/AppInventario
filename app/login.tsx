@@ -13,6 +13,7 @@ import { loginApi } from "@/api/login.api";
 import { router } from "expo-router";
 import { useStorageState } from "@/hooks/useStorageState";
 import { useSessionStore } from "@/stores/sessionStore";
+import { useEffect } from "react";
 
 export default function Login() {
   const color = useAppTheme();
@@ -37,7 +38,6 @@ export default function Login() {
       signIn(emailForm, response.access_token);
       setJwt(response.access_token);
       setEmail(emailForm);
-      router.replace({ pathname: "/home" });
     },
     successNotification: {
       message: "Inicio de sesión exitoso",
@@ -50,6 +50,12 @@ export default function Login() {
       extras: undefined,
     });
   }
+
+  useEffect(() => {
+    if (loginMutation.isSuccess) {
+      router.replace({ pathname: "/home" });
+    }
+  }, [loginMutation.isSuccess]);
 
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
