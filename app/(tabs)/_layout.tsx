@@ -132,11 +132,13 @@ export default function TabLayout() {
             title: 'Artículos',
             drawerIcon: ({ color, focused, size }) => (
               <MaterialCommunityIcons
-                name={focused ? 'database-search' : 'database-search'}
+                name={focused ? 'database-search' : 'database-search-outline'}
                 size={size}
                 color={color}
               />
             ),
+            swipeEnabled: false,
+            // unmountOnBlur: true,
           }}
         />
         <Drawer.Screen

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   MutateOptions,
@@ -21,6 +21,8 @@ import {
 import { MessageResponse } from '@/types/response';
 import { useProgressQuery, useProgressMutation } from './progress';
 import { Notification, useNotification } from '@/stores/notificationStore';
+import { useFocusEffect } from 'expo-router';
+import { Keyboard } from 'react-native';
 
 export {
   useCrud,
@@ -48,17 +50,16 @@ function useCrud<T>() {
   const [current, setCurrent] = useState<T>();
   const [total, setTotal] = useState(0);
   const [numberOfItemsPerPageList, setNumberOfItemsPerPageList] = useState([
-    5, 10, 15, 20,
+    5, 10, 15, 25, 50,
   ]);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const from = page * itemsPerPage;
   const to = Math.min((page + 1) * itemsPerPage, total);
   const numberOfPages = Math.ceil(total / itemsPerPage);
 
-  function onItemsPerPageChange(itemsPerPage: number) {
-    setItemsPerPage(itemsPerPage);
+  useEffect(() => {
     setPage(0);
-  }
+  }, [search, filters, itemsPerPage]);
 
   return {
     page,
@@ -83,7 +84,6 @@ function useCrud<T>() {
     to,
     numberOfItemsPerPageList,
     setNumberOfItemsPerPageList,
-    onItemsPerPageChange,
     numberOfPages,
   };
 }
@@ -113,13 +113,13 @@ function useCrudQuery<E, T>({
     placeholderData: keepPrevious ? keepPreviousData : undefined,
     queryKey: [name, page, limit, search, filters.toString(), extras],
     queryFn: () => {
+      const params = new URLSearchParams(filters);
+      params.append('skip', (page * limit).toString());
+      params.append('limit', limit.toString());
+      params.append('search', search);
+
       return apiFunction({
-        params: {
-          page: page,
-          limit: limit,
-          search: search !== '' ? search : undefined,
-          ...Object.fromEntries(filters),
-        },
+        params: params,
         extras: extras,
       });
     },
@@ -234,6 +234,7 @@ function useCrudMutationF<
       unknown
     >
   ) {
+    Keyboard.dismiss();
     if (!crudCreateMutationF.isPending) {
       crudCreateMutationF.mutate(variables, options);
     }

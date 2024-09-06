@@ -3,10 +3,10 @@ import {
   Text,
   TextInput,
   TextInputProps,
-} from "react-native-paper";
-import { Controller } from "react-hook-form";
-import { Flex } from "../Flex";
-import { useState } from "react";
+} from 'react-native-paper';
+import { Controller } from 'react-hook-form';
+import { Flex } from '../Flex';
+import { useState } from 'react';
 
 type CTextInputProps = {
   name: string;
@@ -33,7 +33,7 @@ export function CTextInput({
     <Controller
       name={name}
       render={({ field: { onChange, onBlur, value, ref }, fieldState }) => (
-        <Flex>
+        <Flex style={{ marginVertical: 3 }}>
           <TextInput
             label={label}
             secureTextEntry={secureTextEntry && !showHide}
