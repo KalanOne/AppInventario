@@ -1,33 +1,26 @@
-import { TouchableOpacity, useColorScheme } from "react-native";
-import { useMaterial3ThemeContext } from "./providers/Material3ThemeProvider";
-import { useState } from "react";
-import { isDynamicThemeSupported } from "@pchmn/expo-material3-theme";
-import { Flex } from "./Flex";
-import {
-  Button,
-  IconButton,
-  Switch,
-  Text,
-  TouchableRipple,
-} from "react-native-paper";
-import { useThemeStore } from "@/stores/defaultTheme";
+import { useColorScheme } from 'react-native';
+import { useMaterial3ThemeContext } from './providers/Material3ThemeProvider';
+import { useState } from 'react';
+import { Flex } from './Flex';
+import { IconButton, Switch, Text, TouchableRipple } from 'react-native-paper';
+import { useThemeStore } from '@/stores/defaultTheme';
 
 const colors = [
   {
-    light: "#FFE082",
-    dark: "#FFE082",
+    light: '#FFE082',
+    dark: '#FFE082',
   },
   {
-    light: "#3E8260",
-    dark: "#ADF2C7",
+    light: '#3E8260',
+    dark: '#ADF2C7',
   },
   {
-    light: "#756FAB",
-    dark: "#E5DFFF",
+    light: '#756FAB',
+    dark: '#E5DFFF',
   },
   {
-    light: "#9F6C2C",
-    dark: "#FDDDB9",
+    light: '#9F6C2C',
+    dark: '#FDDDB9',
   },
 ];
 
@@ -70,7 +63,7 @@ export function ThemeEditor() {
         <Text>Select source color</Text>
         <Flex gap={20} direction="row" justify="center">
           {colors.map(({ light, dark }) => {
-            const color = colorScheme === "dark" ? dark : light;
+            const color = colorScheme === 'dark' ? dark : light;
             return (
               <TouchableRipple
                 style={{ height: 50, width: 50, borderRadius: 50 }}

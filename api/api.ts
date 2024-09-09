@@ -64,11 +64,9 @@ const http = async <T>({
 
   let response: AxiosResponse<T, T>;
 
-  try {
-    response = await axios(request);
-  } catch (e) {
-    throw e;
-  }
+  response = await axios(request);
+
+  console.log('response', response);
 
   return response.data;
 };

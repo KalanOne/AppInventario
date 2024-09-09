@@ -1,16 +1,28 @@
-import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { Button, Dialog, FAB, Portal, Text } from "react-native-paper";
+import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Button, Dialog, FAB, Portal, Text } from 'react-native-paper';
 
-import Progress from "@/components/general/Progress";
-import { Material3ThemeProvider } from "@/components/providers/Material3ThemeProvider";
-import { ThemeEditor } from "@/components/ThemeEditor";
-import { useProgressStore } from "@/stores/progress";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useCameraPermissions } from "expo-camera";
-import { NotificationBar } from "@/components/general/NotificationBar";
+import Progress from '@/components/general/Progress';
+import { Material3ThemeProvider } from '@/components/providers/Material3ThemeProvider';
+import { ThemeEditor } from '@/components/ThemeEditor';
+import { useProgressStore } from '@/stores/progress';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useCameraPermissions } from 'expo-camera';
+import { NotificationBar } from '@/components/general/NotificationBar';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry(failureCount, error) {
+        if (error.status === 404) return false;
+        else if (error.status === 401) return false;
+        else if (error.status === 403) return false;
+        else if (failureCount < 2) return true;
+        else return false;
+      },
+    },
+  },
+});
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`
@@ -31,10 +43,9 @@ export default function RootLayout() {
     requestPermission();
   }, []);
 
-
   return (
     <QueryClientProvider client={queryClient}>
-      <Material3ThemeProvider sourceColor={"#339cff"}>
+      <Material3ThemeProvider>
         {progresses.length > 0 && <Progress />}
         <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
           <Stack.Screen name="index" />
@@ -74,13 +85,13 @@ export default function RootLayout() {
         <FAB
           icon="palette"
           style={{
-            position: "absolute",
+            position: 'absolute',
             margin: 16,
             right: 0,
             bottom: 45,
           }}
           onPress={toggleModal}
-          visible={false}
+          // visible={false}
         />
         <NotificationBar />
       </Material3ThemeProvider>

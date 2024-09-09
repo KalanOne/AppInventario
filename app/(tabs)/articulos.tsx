@@ -21,10 +21,34 @@ import { Articulo, ArticulosResponse } from '@/types/articulos';
 import { FilterModal } from '@/components/form/FilterModal';
 import { CTextInput } from '@/components/form/CTextInput';
 import { z } from 'zod';
+import { MultipleSelectList } from 'react-native-dropdown-select-list';
+import { router } from 'expo-router';
+import { useNotification } from '@/stores/notificationStore';
 
 export default function ArticulosScreen() {
   const color = useAppTheme();
+  const addNotification = useNotification((state) => state.addNotification);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selected, setSelected] = useState([]);
+  const data = [
+    { key: '1', value: 'Mobiles', disabled: true },
+    { key: '2', value: 'Appliances' },
+    { key: '3', value: 'Cameras' },
+    { key: '4', value: 'Computers', disabled: true },
+    { key: '5', value: 'Vegetables' },
+    { key: '6', value: 'Diary Products' },
+    { key: '7', value: 'Drinks' },
+    { key: '8', value: 'Biscuits' },
+    { key: '9', value: 'Snacks' },
+    { key: '10', value: 'Fruits' },
+    { key: '11', value: 'Beverages' },
+    { key: '12', value: 'Beauty & Hygiene' },
+    { key: '13', value: 'Bakery Cakes & Dairy' },
+    { key: '14', value: 'Cleaning & Household' },
+    { key: '15', value: 'Kitchen' },
+    { key: '16', value: 'Pet Care' },
+    { key: '17', value: 'Gourmet & World Food' },
+  ];
 
   const crud = useCrud<ArticulosResponse>();
   const articulosQuery = useCrudQuery({
@@ -51,16 +75,8 @@ export default function ArticulosScreen() {
     crud.setFilterModalOpen(true);
   }
 
-  function handleFilterChange() {
-    console.log('Filter change');
-  }
-
   function handleFilterApply() {
     console.log('Filter apply');
-  }
-
-  function handleFilterClear() {
-    console.log('Filter clear');
   }
 
   function handleFilterDismiss() {
@@ -76,6 +92,20 @@ export default function ArticulosScreen() {
       crud.setTotal(articulosQuery.data ? articulosQuery.data[1] : 0);
     }
   }, [articles]);
+
+  useEffect(() => {
+    if (
+      articulosQuery.isError &&
+      !articulosQuery.isLoading &&
+      articulosQuery.error.status === 401
+    ) {
+      addNotification({
+        message: 'Session expired',
+        code: '401',
+      });
+      router.push('/logout');
+    }
+  }, [articulosQuery.isError]);
 
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
@@ -146,6 +176,13 @@ export default function ArticulosScreen() {
         <TextInput></TextInput>
         <TextInput></TextInput>
         <TextInput></TextInput>
+        <MultipleSelectList
+          setSelected={(val: any) => setSelected(val)}
+          data={data}
+          save="key"
+          label="Categories"
+          maxHeight={200}
+        />
       </FilterModal>
     </Flex>
   );
@@ -166,9 +203,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const filterArticleSchema = z.object({
-  
-});
+const filterArticleSchema = z.object({});
 
 type FilterArticleSchemaType = z.infer<typeof filterArticleSchema>;
 

@@ -1,16 +1,9 @@
-import { useEffect, useState } from 'react';
-
-import {
-  MutateOptions,
-  MutationFunction,
-  UseQueryResult,
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Keyboard } from 'react-native';
 
+import { Notification, useNotification } from '@/stores/notificationStore';
 import {
   CreateApiFunctionParams,
   DeleteApiFunctionParams,
@@ -19,10 +12,19 @@ import {
   UpdateApiFunctionParams,
 } from '@/types/api';
 import { MessageResponse } from '@/types/response';
-import { useProgressQuery, useProgressMutation } from './progress';
-import { Notification, useNotification } from '@/stores/notificationStore';
-import { useFocusEffect } from 'expo-router';
-import { Keyboard } from 'react-native';
+import {
+  keepPreviousData,
+  MutateOptions,
+  MutationFunction,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+} from '@tanstack/react-query';
+
+import { useProgressMutation, useProgressQuery } from './progress';
+import { useSessionStore } from '@/stores/sessionStore';
+import { useStorageState } from './useStorageState';
 
 export {
   useCrud,
@@ -38,6 +40,12 @@ export type { MutationParams };
 
 interface MutationParams {
   id?: number;
+}
+
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: AxiosError;
+  }
 }
 
 function useCrud<T>() {
@@ -109,7 +117,7 @@ function useCrudQuery<E, T>({
   keepPrevious,
   extras,
 }: UseCrudQueryParams<E, T>) {
-  const query = useQuery({
+  const query = useQuery<T, AxiosError, T>({
     placeholderData: keepPrevious ? keepPreviousData : undefined,
     queryKey: [name, page, limit, search, filters.toString(), extras],
     queryFn: () => {
@@ -124,7 +132,6 @@ function useCrudQuery<E, T>({
       });
     },
   });
-
   useProgressQuery(query, name);
   return query as UseQueryResult<Awaited<T>>;
 }

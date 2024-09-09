@@ -1,10 +1,8 @@
 import { Flex } from '@/components/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { useStorageState } from '@/hooks/useStorageState';
-import { useNotification } from '@/stores/notificationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
 
 export default function LogoutScreen() {
   const color = useAppTheme();

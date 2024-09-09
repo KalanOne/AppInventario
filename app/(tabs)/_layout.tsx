@@ -109,6 +109,7 @@ export default function TabLayout() {
             backgroundColor: colors.colors.surfaceContainer,
           },
           drawerInactiveTintColor: colors.colors.secondary,
+          drawerActiveTintColor: colors.colors.primary,
         }}
       >
         <Drawer.Screen
