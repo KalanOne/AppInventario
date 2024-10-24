@@ -6,27 +6,25 @@ import { Flex } from '../Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
-export { FilterModal };
+export { UpdateModal };
 
-interface FilterModalProps {
+interface UpdateModalProps {
   visible: boolean;
-  handleFilterDismiss: () => void;
+  handleUpdateDismiss: () => void;
   children: ReactNode;
   form: UseFormReturn<any, unknown, any>;
-  handleFilterApply?: () => void;
-  handleFilterReset?: () => void;
-  handleFilterCancel?: () => void;
+  handleUpdateApply?: () => void;
+  handleUpdateCancel?: () => void;
 }
 
-function FilterModal({
+function UpdateModal({
   visible,
-  handleFilterDismiss,
+  handleUpdateDismiss,
   children,
   form,
-  handleFilterApply,
-  handleFilterReset,
-  handleFilterCancel,
-}: FilterModalProps) {
+  handleUpdateApply,
+  handleUpdateCancel,
+}: UpdateModalProps) {
   const color = useAppTheme();
   const styles = StyleSheet.create({
     containerStyle: {
@@ -54,17 +52,17 @@ function FilterModal({
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={handleFilterDismiss}
+        onDismiss={handleUpdateDismiss}
         contentContainerStyle={styles.containerStyle}
       >
         <Flex>
           <Text variant="titleLarge" style={styles.title}>
-            Filter
+            Update
           </Text>
           <FormProvider {...form}>
             <Flex padding={10}>{children}</Flex>
           </FormProvider>
-          {handleFilterApply || handleFilterReset || handleFilterCancel ? (
+          {handleUpdateApply || handleUpdateCancel ? (
             <Flex
               direction="row"
               align="center"
@@ -72,9 +70,9 @@ function FilterModal({
               style={styles.buttonsContainer}
             >
               <Flex>
-                {handleFilterCancel && (
+                {handleUpdateCancel && (
                   <Button
-                    onPress={handleFilterCancel}
+                    onPress={handleUpdateCancel}
                     mode="contained-tonal"
                     style={styles.button}
                   >
@@ -84,22 +82,13 @@ function FilterModal({
               </Flex>
 
               <Flex direction="row" align="center" gap={10} justify="flex-end">
-                {handleFilterReset && (
+                {handleUpdateApply && (
                   <Button
-                    onPress={handleFilterReset}
+                    onPress={handleUpdateApply}
                     mode="contained-tonal"
                     style={styles.button}
                   >
-                    Reset
-                  </Button>
-                )}
-                {handleFilterApply && (
-                  <Button
-                    onPress={handleFilterApply}
-                    mode="contained-tonal"
-                    style={styles.button}
-                  >
-                    Apply
+                    Update
                   </Button>
                 )}
               </Flex>

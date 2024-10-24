@@ -58,42 +58,6 @@ export default function TabLayout() {
   }, [session]);
 
   return (
-    // <Tabs
-    //   screenOptions={{
-    //     tabBarActiveTintColor: colors.colors.primary,
-    //     headerShown: false,
-    //     tabBarStyle: {
-    //       backgroundColor: colors.colors.background,
-    //     },
-    //   }}
-    //   initialRouteName="home"
-    // >
-    //   <Tabs.Screen
-    //     name="home"
-    //     options={{
-    //       title: "Home",
-    //       tabBarIcon: ({ color, focused }) => (
-    //         <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
-    //       ),
-    //     }}
-    //   />
-    //   <Tabs.Screen
-    //     name="cameras/scanCamera"
-    //     options={{
-    //       // href: null,
-    //       // tabBarStyle: {
-    //       //   display: "none",
-    //       // },
-    //       title: "Camera",
-    //       tabBarIcon: ({ color, focused }) => (
-    //         <TabBarIcon
-    //           name={focused ? "camera" : "camera-outline"}
-    //           color={color}
-    //         />
-    //       ),
-    //     }}
-    //   />
-    // </Tabs>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         initialRouteName="home"
@@ -110,6 +74,7 @@ export default function TabLayout() {
           },
           drawerInactiveTintColor: colors.colors.secondary,
           drawerActiveTintColor: colors.colors.primary,
+          unmountOnBlur: true,
         }}
       >
         <Drawer.Screen
@@ -140,24 +105,6 @@ export default function TabLayout() {
             ),
             swipeEnabled: false,
             // unmountOnBlur: true,
-          }}
-        />
-        <Drawer.Screen
-          name="cameras/scanCamera"
-          options={{
-            drawerLabel: 'Camera',
-            title: 'Camera',
-            drawerItemStyle: {
-              display: 'none',
-            },
-            drawerIcon: ({ color, focused, size }) => (
-              <TabBarIcon
-                name={focused ? 'camera' : 'camera-outline'}
-                color={color}
-                size={size}
-              />
-            ),
-            unmountOnBlur: true,
           }}
         />
         <Drawer.Screen

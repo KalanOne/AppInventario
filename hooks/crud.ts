@@ -23,8 +23,6 @@ import {
 } from '@tanstack/react-query';
 
 import { useProgressMutation, useProgressQuery } from './progress';
-import { useSessionStore } from '@/stores/sessionStore';
-import { useStorageState } from './useStorageState';
 
 export {
   useCrud,
@@ -133,6 +131,18 @@ function useCrudQuery<E, T>({
     },
   });
   useProgressQuery(query, name);
+  const addNotification = useNotification((state) => state.addNotification);
+
+  useEffect(() => {
+    if (query.isError && !query.isLoading && query.error.status === 401) {
+      addNotification({
+        message: 'Session expired',
+        code: '401',
+      });
+      router.push('/logout');
+    }
+  }, [query.isError]);
+
   return query as UseQueryResult<Awaited<T>>;
 }
 

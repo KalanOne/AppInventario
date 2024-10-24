@@ -6,27 +6,27 @@ import { Flex } from '../Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
-export { FilterModal };
+export { CreateModal };
 
-interface FilterModalProps {
+interface CreateModalProps {
   visible: boolean;
-  handleFilterDismiss: () => void;
+  handleCreateDismiss: () => void;
   children: ReactNode;
   form: UseFormReturn<any, unknown, any>;
-  handleFilterApply?: () => void;
-  handleFilterReset?: () => void;
-  handleFilterCancel?: () => void;
+  handleCreateApply?: () => void;
+  handleCreateReset?: () => void;
+  handleCreateCancel?: () => void;
 }
 
-function FilterModal({
+function CreateModal({
   visible,
-  handleFilterDismiss,
+  handleCreateDismiss,
   children,
   form,
-  handleFilterApply,
-  handleFilterReset,
-  handleFilterCancel,
-}: FilterModalProps) {
+  handleCreateApply,
+  handleCreateReset,
+  handleCreateCancel,
+}: CreateModalProps) {
   const color = useAppTheme();
   const styles = StyleSheet.create({
     containerStyle: {
@@ -54,17 +54,17 @@ function FilterModal({
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={handleFilterDismiss}
+        onDismiss={handleCreateDismiss}
         contentContainerStyle={styles.containerStyle}
       >
         <Flex>
           <Text variant="titleLarge" style={styles.title}>
-            Filter
+            Create
           </Text>
           <FormProvider {...form}>
             <Flex padding={10}>{children}</Flex>
           </FormProvider>
-          {handleFilterApply || handleFilterReset || handleFilterCancel ? (
+          {handleCreateApply || handleCreateReset || handleCreateCancel ? (
             <Flex
               direction="row"
               align="center"
@@ -72,9 +72,9 @@ function FilterModal({
               style={styles.buttonsContainer}
             >
               <Flex>
-                {handleFilterCancel && (
+                {handleCreateCancel && (
                   <Button
-                    onPress={handleFilterCancel}
+                    onPress={handleCreateCancel}
                     mode="contained-tonal"
                     style={styles.button}
                   >
@@ -84,22 +84,22 @@ function FilterModal({
               </Flex>
 
               <Flex direction="row" align="center" gap={10} justify="flex-end">
-                {handleFilterReset && (
+                {handleCreateReset && (
                   <Button
-                    onPress={handleFilterReset}
+                    onPress={handleCreateReset}
                     mode="contained-tonal"
                     style={styles.button}
                   >
                     Reset
                   </Button>
                 )}
-                {handleFilterApply && (
+                {handleCreateApply && (
                   <Button
-                    onPress={handleFilterApply}
+                    onPress={handleCreateApply}
                     mode="contained-tonal"
                     style={styles.button}
                   >
-                    Apply
+                    Create
                   </Button>
                 )}
               </Flex>

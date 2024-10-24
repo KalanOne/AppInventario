@@ -1,4 +1,10 @@
-export type { ArticulosResponse, Articulo, Producto };
+export type {
+  ArticulosResponse,
+  Articulo,
+  Producto,
+  ArticuloUpdate,
+  ArticuloCreate,
+};
 
 type ArticulosResponse = [Articulo[], number];
 
@@ -10,7 +16,7 @@ interface Articulo {
   createdAt: string;
   updatedAt: string;
   version: number;
-  deletedDate: any;
+  deletedDate: string | null;
   product: Producto;
 }
 
@@ -22,4 +28,23 @@ interface Producto {
   updatedAt: string;
   version: number;
   deletedDate: any;
+}
+
+interface ArticuloUpdate {
+  name: string;
+  description: string;
+  barcode: string;
+  multiple: string;
+  factor: number;
+  productId: number;
+  articleId: number;
+}
+
+interface ArticuloCreate {
+  productId?: number;
+  name: string;
+  description: string;
+  barcode: string;
+  multiple: string;
+  factor: number;
 }

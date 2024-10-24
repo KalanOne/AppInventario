@@ -1,8 +1,8 @@
-import { Notification, useNotification } from "@/stores/notificationStore";
-import { useEffect, useState } from "react";
-import { GestureResponderEvent } from "react-native";
-import { Button, Snackbar } from "react-native-paper";
-import { $RemoveChildren } from "react-native-paper/lib/typescript/types";
+import { Notification, useNotification } from '@/stores/notificationStore';
+import { useEffect, useState } from 'react';
+import { GestureResponderEvent } from 'react-native';
+import { Button, Portal, Snackbar } from 'react-native-paper';
+import { $RemoveChildren } from 'react-native-paper/lib/typescript/types';
 
 export function NotificationBar() {
   const notifications = useNotification((state) => state.notifications);
@@ -47,18 +47,20 @@ export function NotificationBar() {
   }, [notifications, currentNotification, open]);
 
   return (
-    <Snackbar
-      key={currentNotification ? currentNotification.key : undefined}
-      visible={open}
-      onDismiss={handleClose}
-      action={action}
-      duration={currentNotification?.duration ?? 5000}
-      icon={"progress-close"}
-      onIconPress={handleClose}
-    >
-      {currentNotification
-        ? `${currentNotification.code ?? ""}${currentNotification.code ? " - " : ""}${currentNotification.message}`
-        : undefined}
-    </Snackbar>
+    <Portal>
+      <Snackbar
+        key={currentNotification ? currentNotification.key : undefined}
+        visible={open}
+        onDismiss={handleClose}
+        action={action}
+        duration={currentNotification?.duration ?? 5000}
+        icon={'progress-close'}
+        onIconPress={handleClose}
+      >
+        {currentNotification
+          ? `${currentNotification.code ?? ''}${currentNotification.code ? ' - ' : ''}${currentNotification.message}`
+          : undefined}
+      </Snackbar>
+    </Portal>
   );
 }

@@ -1,9 +1,4 @@
-import {
-  HelperText,
-  Text,
-  TextInput,
-  TextInputProps,
-} from 'react-native-paper';
+import { HelperText } from 'react-native-paper';
 import { Controller } from 'react-hook-form';
 import { Flex } from '../Flex';
 import { useEffect, useState } from 'react';

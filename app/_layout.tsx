@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Dialog, FAB, Portal, Text } from 'react-native-paper';
 
 import Progress from '@/components/general/Progress';
@@ -9,6 +9,7 @@ import { useProgressStore } from '@/stores/progress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCameraPermissions } from 'expo-camera';
 import { NotificationBar } from '@/components/general/NotificationBar';
+import { Animated, PanResponder } from 'react-native';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,6 +21,10 @@ const queryClient = new QueryClient({
         else if (failureCount < 2) return true;
         else return false;
       },
+      refetchInterval: 600000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: 'always',
+      staleTime: 600000,
     },
   },
 });
@@ -34,10 +39,34 @@ export default function RootLayout() {
   const progresses = useProgressStore((state) => state.progresses);
   const [permission, requestPermission] = useCameraPermissions();
   // useLanguage();
+  const pan = useRef(new Animated.ValueXY()).current;
 
   function toggleModal() {
     setVisible(!visible);
   }
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        pan.setOffset({
+          x: (pan.x as any)._value,
+          y: (pan.y as any)._value,
+        });
+        pan.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: Animated.event(
+        [
+          null,
+          { dx: pan.x, dy: pan.y }, // Movemos en función del gesto
+        ],
+        { useNativeDriver: false }
+      ),
+      onPanResponderRelease: () => {
+        pan.flattenOffset(); // Resetea la posición de offset cuando el usuario suelta
+      },
+    })
+  ).current;
 
   useEffect(() => {
     requestPermission();
@@ -47,9 +76,15 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <Material3ThemeProvider>
         {progresses.length > 0 && <Progress />}
-        <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            freezeOnBlur: true,
+          }}
+          initialRouteName="index"
+        >
           <Stack.Screen name="index" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(application)" />
         </Stack>
         {permission && !permission.granted && (
           <Portal>
@@ -82,17 +117,39 @@ export default function RootLayout() {
             </Dialog.Content>
           </Dialog>
         </Portal>
-        <FAB
+        {/* <FAB
           icon="palette"
           style={{
             position: 'absolute',
             margin: 16,
             right: 0,
-            bottom: 45,
+            // bottom: 45,
+            bottom: 15,
           }}
           onPress={toggleModal}
-          // visible={false}
-        />
+          visible={true}
+          size="small"
+        /> */}
+        <Animated.View
+          style={{
+            transform: [{ translateX: pan.x }, { translateY: pan.y }],
+            position: 'absolute',
+            right: 0,
+            bottom: 15,
+          }}
+          {...panResponder.panHandlers}
+          // onTouchStart={toggleModal}
+        >
+          <FAB
+            icon="palette"
+            style={{
+              margin: 16,
+            }}
+            onPress={toggleModal}
+            visible={true}
+            // size="small"
+          />
+        </Animated.View>
         <NotificationBar />
       </Material3ThemeProvider>
     </QueryClientProvider>

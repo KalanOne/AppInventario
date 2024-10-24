@@ -8,7 +8,7 @@ export { http };
 
 interface HttpArguments {
   path: string;
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   data?: any;
   // params?: Record<string, string | undefined>;
   params?: URLSearchParams;
@@ -65,8 +65,6 @@ const http = async <T>({
   let response: AxiosResponse<T, T>;
 
   response = await axios(request);
-
-  console.log('response', response);
 
   return response.data;
 };
