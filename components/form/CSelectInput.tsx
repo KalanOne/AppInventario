@@ -57,7 +57,7 @@ export function CSelectInput<T = any>({
               save="key"
               label={label}
               placeholder={label}
-              ref={ref}
+              // ref={ref}
               boxStyles={{
                 borderColor: fieldState.invalid
                   ? color.colors.error
@@ -70,7 +70,7 @@ export function CSelectInput<T = any>({
               data={newData}
               save="key"
               placeholder={label}
-              ref={ref}
+              // ref={ref}
               boxStyles={{
                 borderColor: fieldState.invalid
                   ? color.colors.error

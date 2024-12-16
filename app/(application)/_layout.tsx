@@ -103,8 +103,20 @@ export default function TabLayout() {
                 color={color}
               />
             ),
-            swipeEnabled: false,
-            // unmountOnBlur: true,
+          }}
+        />
+        <Drawer.Screen
+          name="nuevaTransaccion"
+          options={{
+            drawerLabel: 'Nueva Transacción',
+            title: 'Nueva Transacción',
+            drawerIcon: ({ color, focused, size }) => (
+              <MaterialCommunityIcons
+                name={focused ? 'plus-circle' : 'plus-circle-outline'}
+                size={size}
+                color={color}
+              />
+            ),
           }}
         />
         <Drawer.Screen

@@ -1,21 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { ScrollView, StyleSheet } from 'react-native';
-import {
-  Button,
-  DataTable,
-  Divider,
-  IconButton,
-  Searchbar,
-  Text,
-} from 'react-native-paper';
+import { DataTable, Divider, IconButton, Searchbar, Text } from 'react-native-paper';
 import { z } from 'zod';
 
-import {
-  createArticles,
-  getArticles,
-  updateArticles,
-} from '@/api/articulos.api';
+import { createArticles, getArticles, updateArticles } from '@/api/articulos.api';
 import { Flex } from '@/components/Flex';
 import { CreateModal } from '@/components/form/CreateModal';
 import { CTextInput } from '@/components/form/CTextInput';
@@ -25,7 +14,6 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { useCrud, useCrudMutationF, useCrudQuery } from '@/hooks/crud';
-import { useNotification } from '@/stores/notificationStore';
 import { Articulo, ArticuloCreate, ArticulosResponse } from '@/types/articulos';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
@@ -33,7 +21,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 export default function ArticulosScreen() {
   const color = useAppTheme();
-  const addNotification = useNotification((state) => state.addNotification);
   const [searchQuery, setSearchQuery] = useState('');
   const [productSearch, setProductSearch] = useState<{
     modal: boolean;
@@ -135,10 +122,14 @@ export default function ArticulosScreen() {
     const filters = deleteEmptyProperties(articleFilterForm.getValues());
     const params = new URLSearchParams();
     for (const key in filters) {
-      params.append(
-        key,
-        `${filters[key as keyof ArticleFilterInputType]?.toString().toUpperCase()}`
-      );
+      if (key != 'barcode') {
+        params.append(
+          key,
+          `${filters[key as keyof ArticleFilterInputType]?.toString().toUpperCase()}`
+        );
+      } else {
+        params.append(key, `${filters[key]?.toString()}`);
+      }
     }
     crud.setFilters(params);
   }
@@ -329,7 +320,14 @@ export default function ArticulosScreen() {
         <CTextInput name="description" label="Description" multiline />
         <Divider />
         <Text>Artículo</Text>
-        <CTextInput name="barcode" label="Barcode" />
+        <Flex direction="row" align="center">
+          <CTextInput name="barcode" label="Barcode" flexStyles={{ flex: 1 }} />
+          <IconButton
+            icon="barcode-scan"
+            onPress={() => handleBarcodeScanClick('filter')}
+            mode="contained"
+          />
+        </Flex>
         <CTextInput name="multiple" label="Multiple" />
         <CTextInput
           name="factor"
