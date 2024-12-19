@@ -10,6 +10,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCameraPermissions } from 'expo-camera';
 import { NotificationBar } from '@/components/general/NotificationBar';
 import { Animated, PanResponder } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,50 +76,52 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Material3ThemeProvider>
-        {progresses.length > 0 && <Progress />}
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            freezeOnBlur: true,
-          }}
-          initialRouteName="index"
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(application)" />
-        </Stack>
-        {permission && !permission.granted && (
-          <Portal>
-            <Dialog visible={true}>
-              <Dialog.Title>Camera Permission</Dialog.Title>
-              <Dialog.Content>
-                {permission.canAskAgain && (
-                  <Text>
-                    This app needs camera permission to scan QR codes.
-                  </Text>
-                )}
-                {!permission.canAskAgain && (
-                  <Text>
-                    You have denied camera permission. Please go to settings and
-                    allow camera permission. Then restart the app.
-                  </Text>
-                )}
-              </Dialog.Content>
-              <Dialog.Actions>
-                <Button onPress={requestPermission}>Accept</Button>
-              </Dialog.Actions>
-            </Dialog>
-          </Portal>
-        )}
-        <Portal>
-          <Dialog visible={visible} onDismiss={toggleModal}>
-            <Dialog.Title>Change theme</Dialog.Title>
-            <Dialog.Content>
-              <ThemeEditor />
-            </Dialog.Content>
-          </Dialog>
-        </Portal>
-        {/* <FAB
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <Material3ThemeProvider>
+            {progresses.length > 0 && <Progress />}
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                freezeOnBlur: true,
+              }}
+              initialRouteName="index"
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(application)" />
+            </Stack>
+            {permission && !permission.granted && (
+              <Portal>
+                <Dialog visible={true}>
+                  <Dialog.Title>Camera Permission</Dialog.Title>
+                  <Dialog.Content>
+                    {permission.canAskAgain && (
+                      <Text>
+                        This app needs camera permission to scan QR codes.
+                      </Text>
+                    )}
+                    {!permission.canAskAgain && (
+                      <Text>
+                        You have denied camera permission. Please go to settings
+                        and allow camera permission. Then restart the app.
+                      </Text>
+                    )}
+                  </Dialog.Content>
+                  <Dialog.Actions>
+                    <Button onPress={requestPermission}>Accept</Button>
+                  </Dialog.Actions>
+                </Dialog>
+              </Portal>
+            )}
+            <Portal>
+              <Dialog visible={visible} onDismiss={toggleModal}>
+                <Dialog.Title>Change theme</Dialog.Title>
+                <Dialog.Content>
+                  <ThemeEditor />
+                </Dialog.Content>
+              </Dialog>
+            </Portal>
+            {/* <FAB
           icon="palette"
           style={{
             position: 'absolute',
@@ -130,28 +134,30 @@ export default function RootLayout() {
           visible={true}
           size="small"
         /> */}
-        <Animated.View
-          style={{
-            transform: [{ translateX: pan.x }, { translateY: pan.y }],
-            position: 'absolute',
-            right: 0,
-            bottom: 15,
-          }}
-          {...panResponder.panHandlers}
-          // onTouchStart={toggleModal}
-        >
-          <FAB
-            icon="palette"
-            style={{
-              margin: 16,
-            }}
-            onPress={toggleModal}
-            visible={true}
-            // size="small"
-          />
-        </Animated.View>
-        <NotificationBar />
-      </Material3ThemeProvider>
+            <Animated.View
+              style={{
+                transform: [{ translateX: pan.x }, { translateY: pan.y }],
+                position: 'absolute',
+                right: 0,
+                bottom: 15,
+              }}
+              {...panResponder.panHandlers}
+              // onTouchStart={toggleModal}
+            >
+              <FAB
+                icon="palette"
+                style={{
+                  margin: 16,
+                }}
+                onPress={toggleModal}
+                visible={true}
+                // size="small"
+              />
+            </Animated.View>
+            <NotificationBar />
+          </Material3ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </QueryClientProvider>
   );
 }

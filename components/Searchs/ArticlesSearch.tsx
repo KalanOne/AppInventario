@@ -1,32 +1,51 @@
-import { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Dropdown } from 'react-native-element-dropdown';
-import { Button, Icon, Modal, Portal, Text } from 'react-native-paper';
-
-import { getProductsSearch } from '@/api/searchs.api';
-import { useProgressQuery } from '@/hooks/progress';
-import { Product } from '@/types/searchs';
-import { AntDesign } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-
-import { Flex } from '../Flex';
+import { useMemo, useState } from 'react';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
+import { StyleSheet } from 'react-native';
+import { getArticlesSearch } from '@/api/searchs.api';
+import { useProgressQuery } from '@/hooks/progress';
+import {
+  Button,
+  HelperText,
+  Icon,
+  Modal,
+  Portal,
+  Text,
+  TextInput,
+} from 'react-native-paper';
+import { Flex } from '../Flex';
+import { Dropdown } from 'react-native-element-dropdown';
+import { AntDesign } from '@expo/vector-icons';
+import { Article, FormattedArticle } from '@/types/searchs';
+import { Scanner } from '../scanner/Scanner';
 
-export { ProductsSearch };
-interface ProductsSearchProps {
+export { ArticlesSearch };
+
+interface ArticlesSearchProps {
   visible: boolean;
   handleSearchDismissCancel: () => void;
-  handleFoundProduct: (product: Product) => void;
+  handleFoundArticle: (article: Article) => void;
 }
 
-function ProductsSearch({
+function ArticlesSearch({
   visible,
   handleSearchDismissCancel,
-  handleFoundProduct,
-}: ProductsSearchProps) {
+  handleFoundArticle,
+}: ArticlesSearchProps) {
   const color = useAppTheme();
   const [isFocus, setIsFocus] = useState(false);
-  const [selectedDrop, setSelectedDrop] = useState<Product | null>(null);
+  const [selectedDrop, setSelectedDrop] = useState<FormattedArticle | null>(
+    null
+  );
+  const [barcodeScan, setBarcodeScan] = useState<{
+    barcode: string | null;
+    modal: boolean;
+    found: boolean | null;
+  }>({
+    barcode: null,
+    modal: false,
+    found: null,
+  });
 
   const styles = StyleSheet.create({
     containerStyle: {
@@ -61,7 +80,7 @@ function ProductsSearch({
       borderWidth: 0.5,
       borderRadius: 8,
       paddingHorizontal: 8,
-      marginBottom: 20,
+      marginVertical: 20,
     },
     icon: {
       marginRight: 5,
@@ -106,18 +125,30 @@ function ProductsSearch({
     },
   });
 
-  const productsSearchQuery = useQuery({
-    queryKey: ['productsSearch'],
+  const articlesSearchQuery = useQuery({
+    queryKey: ['articlesSearch'],
     queryFn: async () => {
-      return await getProductsSearch();
+      return await getArticlesSearch();
     },
   });
-  useProgressQuery(productsSearchQuery, 'productsSearch');
-  const products = productsSearchQuery.data ?? [];
+  useProgressQuery(articlesSearchQuery, 'articlesSearch');
+  const articles = articlesSearchQuery.data ?? [];
+
+  const formattedArticles = useMemo(() => {
+    return articles.map((article) => ({
+      ...article,
+      name: `${article.product.name} - ${article.multiple} - ${article.factor}`,
+    }));
+  }, [articles]);
 
   function handlefound() {
     if (selectedDrop) {
-      handleFoundProduct(selectedDrop);
+      articles.find((article) => {
+        if (article.id == selectedDrop.id) {
+          handleFoundArticle(article);
+        }
+        return article.id === selectedDrop.id;
+      });
       setSelectedDrop(null);
     } else {
       handleSearchDismissCancelLocal();
@@ -130,6 +161,50 @@ function ProductsSearch({
     handleSearchDismissCancel();
   }
 
+  function handleBarcodeScan(barcode: string) {
+    const article = articles.find((article) => article.barcode === barcode);
+    if (article) {
+      handleFoundArticle(article);
+      setBarcodeScan({
+        barcode: null,
+        modal: false,
+        found: null,
+      });
+    } else {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: false,
+      });
+    }
+  }
+
+  function handleBarcodeChange(barcode: string) {
+    const article = articles.find((article) => article.barcode === barcode);
+    if (article) {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: true,
+      });
+      setSelectedDrop(
+        formattedArticles.find((a) => a.id === article.id) ?? null
+      );
+    } else {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: false,
+      });
+      setSelectedDrop(null);
+
+
+
+
+      
+    }
+  }
+
   return (
     <Portal>
       <Modal
@@ -139,8 +214,36 @@ function ProductsSearch({
       >
         <Flex>
           <Text variant="titleLarge" style={styles.title}>
-            Buscar productos
+            Buscar articulos
           </Text>
+          <TextInput
+            value={barcodeScan.barcode ?? ''}
+            onChangeText={handleBarcodeChange}
+            placeholder="Barcode"
+            right={
+              <TextInput.Icon
+                icon="barcode-scan"
+                onPress={() =>
+                  setBarcodeScan({
+                    barcode: null,
+                    modal: true,
+                    found: null,
+                  })
+                }
+              />
+            }
+          />
+          {barcodeScan.found === false && barcodeScan.barcode && (
+            <HelperText
+              type="info"
+              padding={'none'}
+              style={{
+                color: color.colors.primary,
+              }}
+            >
+              Article not found by barcode
+            </HelperText>
+          )}
           <Dropdown
             style={[
               DropDownStyles.dropdown,
@@ -152,7 +255,7 @@ function ProductsSearch({
             iconStyle={DropDownStyles.iconStyle}
             containerStyle={DropDownStyles.containerStyle}
             itemTextStyle={DropDownStyles.itemTextStyle}
-            data={products}
+            data={formattedArticles}
             search
             maxHeight={300}
             labelField="name"
@@ -225,6 +328,13 @@ function ProductsSearch({
           </Flex>
         </Flex>
       </Modal>
+      <Scanner
+        visible={barcodeScan.modal}
+        onDismissCancel={() =>
+          setBarcodeScan((prev) => ({ ...prev, modal: false }))
+        }
+        onBarcodeScanned={handleBarcodeScan}
+      />
     </Portal>
   );
 }

@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Modal, Portal, Text } from 'react-native-paper';
 
 import { Flex } from '../Flex';
@@ -13,7 +13,7 @@ interface CreateModalProps {
   handleCreateDismiss: () => void;
   children: ReactNode;
   form: UseFormReturn<any, unknown, any>;
-  handleCreateApply?: () => void;
+  handleCreateApply?: () => Promise<void> | void;
   handleCreateReset?: () => void;
   handleCreateCancel?: () => void;
 }
@@ -28,6 +28,7 @@ function CreateModal({
   handleCreateCancel,
 }: CreateModalProps) {
   const color = useAppTheme();
+  const [isProcessing, setIsProcessing] = useState(false);
   const styles = StyleSheet.create({
     containerStyle: {
       backgroundColor: color.colors.surfaceBright,
@@ -44,11 +45,22 @@ function CreateModal({
       // margin: 5,
     },
     buttonsContainer: {
-      marginVertical: 10,
+      // marginVertical: 10,
       width: '100%',
-      paddingHorizontal: 10,
+      // paddingHorizontal: 10,
     },
   });
+
+  async function handleCreateApplyLocal() {
+    if (handleCreateApply) {
+      setIsProcessing(true);
+      try {
+        await handleCreateApply();
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  }
 
   return (
     <Portal>
@@ -57,12 +69,14 @@ function CreateModal({
         onDismiss={handleCreateDismiss}
         contentContainerStyle={styles.containerStyle}
       >
-        <Flex>
+        <Flex paddingX={10}>
           <Text variant="titleLarge" style={styles.title}>
             Create
           </Text>
           <FormProvider {...form}>
-            <Flex padding={10}>{children}</Flex>
+            <ScrollView style={{ maxHeight: '80%', marginBottom: 10 }}>
+              {children}
+            </ScrollView>
           </FormProvider>
           {handleCreateApply || handleCreateReset || handleCreateCancel ? (
             <Flex
@@ -95,9 +109,10 @@ function CreateModal({
                 )}
                 {handleCreateApply && (
                   <Button
-                    onPress={handleCreateApply}
+                    onPress={handleCreateApplyLocal}
                     mode="contained-tonal"
                     style={styles.button}
+                    disabled={isProcessing}
                   >
                     Create
                   </Button>

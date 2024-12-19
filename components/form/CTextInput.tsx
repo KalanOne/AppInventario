@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
+import { ViewStyle } from 'react-native';
 import { HelperText, TextInput, TextInputProps } from 'react-native-paper';
 
 import { Flex } from '../Flex';
-import { ViewStyle } from 'react-native';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 
 type CTextInputProps = {
@@ -43,6 +43,13 @@ export function CTextInput({
           <TextInput
             label={label}
             secureTextEntry={secureTextEntry && !showHide}
+            right={
+              secureTextEntry && showHide ? (
+                <TextInput.Icon icon="eye-off" onPress={hidePassword} />
+              ) : secureTextEntry && !showHide ? (
+                <TextInput.Icon icon="eye" onPress={showPassword} />
+              ) : undefined
+            }
             {...props}
             value={value?.toString() || ''}
             onChangeText={(text) => {
@@ -60,7 +67,6 @@ export function CTextInput({
                   return;
                 }
                 const isNan = isNaN(Number(text));
-                console.log('isNan', isNan);
                 onChange(isNan ? text : Number(text));
               } else {
                 onChange(text);
@@ -69,13 +75,6 @@ export function CTextInput({
             onBlur={onBlur}
             ref={ref}
             error={fieldState.invalid}
-            right={
-              secureTextEntry && showHide ? (
-                <TextInput.Icon icon="eye-off" onPress={hidePassword} />
-              ) : secureTextEntry && !showHide ? (
-                <TextInput.Icon icon="eye" onPress={showPassword} />
-              ) : undefined
-            }
           />
           {helperText && (
             <HelperText
@@ -83,7 +82,6 @@ export function CTextInput({
               padding="none"
               style={{
                 color: color.colors.primary,
-                // backgroundColor: 'blue',
               }}
             >
               {helperText}
