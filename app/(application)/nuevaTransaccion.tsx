@@ -26,6 +26,7 @@ import { ArticlesSearch } from '@/components/Searchs/ArticlesSearch';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Product } from '@/types/searchs';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { el } from 'react-native-paper-dates';
 
 export default function NuevaTransaccionScreen() {
   const color = useAppTheme();
@@ -224,7 +225,7 @@ export default function NuevaTransaccionScreen() {
                 Quantity
               </DataTable.Title>
               <DataTable.Title
-                style={[styles.columnShort, { alignItems: 'center' }]}
+                style={[styles.columnShort, { justifyContent: 'center' }]}
               >
                 Actions
               </DataTable.Title>
@@ -248,13 +249,7 @@ export default function NuevaTransaccionScreen() {
                       {item.quantity}
                     </DataTable.Cell>
                     <DataTable.Cell
-                      style={[
-                        styles.columnShort,
-                        {
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        },
-                      ]}
+                      style={[styles.columnShort, { justifyContent: 'center' }]}
                       numeric
                     >
                       <IconButton
@@ -405,27 +400,45 @@ export default function NuevaTransaccionScreen() {
   );
 }
 
-const transactionUnitSchema = z.object({
-  productId: z.union([z.number(), z.literal('')]).optional(),
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
+const transactionUnitSchema = z
+  .object({
+    productId: z.union([z.number(), z.literal('')]).optional(),
+    name: z.string().min(1).max(255),
+    description: z.string().min(1).max(255),
 
-  articleId: z.union([z.number(), z.literal('')]).optional(),
-  barcode: z.string().min(1).max(255),
-  multiple: z.string().min(1).max(255),
-  factor: z
-    .union([z.number().min(1).max(255), z.literal('')])
-    .refine((val) => val !== '', {
-      message: 'Factor cannot be empty',
-    }),
+    articleId: z.union([z.number(), z.literal('')]).optional(),
+    barcode: z.string().min(1).max(255),
+    multiple: z.string().min(1).max(255),
+    factor: z
+      .union([z.number().min(1).max(255), z.literal('')])
+      .refine((val) => val !== '', {
+        message: 'Factor cannot be empty',
+      }),
 
-  serial: z.string().optional(),
-  quantity: z
-    .union([z.number().int().positive().min(1), z.literal('')])
-    .refine((val) => val !== '', {
-      message: 'Quantity cannot be empty',
-    }),
-});
+    serial: z.string().optional(),
+    quantity: z
+      .union([z.number().int().positive().min(1), z.literal('')])
+      .refine((val) => val !== '', {
+        message: 'Quantity cannot be empty',
+      }),
+  })
+  .superRefine((val, ctx) => {
+    if (val.serial && val.quantity != 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Serial must be empty when quantity is not 1 or quantity must be 1 when serial is not empty',
+        path: ['serial'],
+      });
+
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Serial must be empty when quantity is not 1 or quantity must be 1 when serial is not empty',
+        path: ['quantity'],
+      });
+    } 
+  });
 
 type TransactionUnitSchemaType = z.infer<typeof transactionUnitSchema>;
 
