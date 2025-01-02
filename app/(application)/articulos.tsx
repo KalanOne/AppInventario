@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { ScrollView, StyleSheet } from 'react-native';
-import { DataTable, Divider, IconButton, Searchbar, Text } from 'react-native-paper';
+import {
+  DataTable,
+  Divider,
+  IconButton,
+  Searchbar,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 import { z } from 'zod';
 
-import { createArticles, getArticles, updateArticles } from '@/api/articulos.api';
+import {
+  createArticles,
+  getArticles,
+  updateArticles,
+} from '@/api/articulos.api';
 import { Flex } from '@/components/Flex';
 import { CreateModal } from '@/components/form/CreateModal';
 import { CTextInput } from '@/components/form/CTextInput';
@@ -320,14 +331,18 @@ export default function ArticulosScreen() {
         <CTextInput name="description" label="Description" multiline />
         <Divider />
         <Text>Artículo</Text>
-        <Flex direction="row" align="center">
-          <CTextInput name="barcode" label="Barcode" flexStyles={{ flex: 1 }} />
-          <IconButton
-            icon="barcode-scan"
-            onPress={() => handleBarcodeScanClick('filter')}
-            mode="contained"
-          />
-        </Flex>
+        <CTextInput
+          name="barcode"
+          label="Barcode"
+          flexStyles={{ flex: 1 }}
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('filter')}
+              mode="contained"
+            />
+          }
+        />
         <CTextInput name="multiple" label="Multiple" />
         <CTextInput
           name="factor"
@@ -353,14 +368,18 @@ export default function ArticulosScreen() {
         <CTextInput name="description" label="Description" multiline />
         <Divider />
         <Text>Artículo</Text>
-        <Flex direction="row" align="center">
-          <CTextInput name="barcode" label="Barcode" flexStyles={{ flex: 1 }} />
-          <IconButton
-            icon="barcode-scan"
-            onPress={() => handleBarcodeScanClick('update')}
-            mode="contained"
-          />
-        </Flex>
+        <CTextInput
+          name="barcode"
+          label="Barcode"
+          flexStyles={{ flex: 1 }}
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('update')}
+              mode="contained"
+            />
+          }
+        />
         <CTextInput name="multiple" label="Multiple" />
         <CTextInput
           name="factor"
@@ -382,35 +401,39 @@ export default function ArticulosScreen() {
         form={articleCreateForm}
       >
         <Text>Producto</Text>
-        <Flex direction="row" align="center">
-          <Flex flex={1}>
-            <CTextInput
-              name="productId"
-              label="Id"
-              helperText={
-                'Si no se selecciona un producto, se creará uno nuevo (<=0 o vacio)'
-              }
-              type="number"
+        <CTextInput
+          name="productId"
+          label="Id"
+          helperText={
+            'Si no se selecciona un producto, se creará uno nuevo (<=0 o vacio)'
+          }
+          type="number"
+          keyboardType="numeric"
+          right={
+            <TextInput.Icon
+              icon="magnify"
+              onPress={handleSearchProductCreatePress}
+              mode="contained"
             />
-          </Flex>
-          <IconButton
-            icon="magnify"
-            onPress={handleSearchProductCreatePress}
-            mode="contained"
-          />
-        </Flex>
+          }
+        />
         <CTextInput name="name" label="Name" />
         <CTextInput name="description" label="Description" multiline />
         <Divider />
         <Text>Artículo</Text>
-        <Flex direction="row" align="center">
-          <CTextInput name="barcode" label="Barcode" flexStyles={{ flex: 1 }} />
-          <IconButton
-            icon="barcode-scan"
-            onPress={() => handleBarcodeScanClick('create')}
-            mode="contained"
-          />
-        </Flex>
+        <CTextInput
+          name="barcode"
+          label="Barcode"
+          flexStyles={{ flex: 1 }}
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('create')}
+              mode="contained"
+            />
+          }
+        />
+
         <CTextInput name="multiple" label="Multiple" />
         <CTextInput
           name="factor"

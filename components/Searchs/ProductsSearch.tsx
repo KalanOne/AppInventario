@@ -111,6 +111,7 @@ function ProductsSearch({
     queryFn: async () => {
       return await getProductsSearch();
     },
+    refetchInterval: 15 * 60000,
   });
   useProgressQuery(productsSearchQuery, 'productsSearch');
   const products = productsSearchQuery.data ?? [];

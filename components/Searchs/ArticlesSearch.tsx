@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { StyleSheet } from 'react-native';
 import { getArticlesSearch } from '@/api/searchs.api';
@@ -130,6 +130,7 @@ function ArticlesSearch({
     queryFn: async () => {
       return await getArticlesSearch();
     },
+    refetchInterval: 15 * 60000,
   });
   useProgressQuery(articlesSearchQuery, 'articlesSearch');
   const articles = articlesSearchQuery.data ?? [];
@@ -137,7 +138,7 @@ function ArticlesSearch({
   const formattedArticles = useMemo(() => {
     return articles.map((article) => ({
       ...article,
-      name: `${article.product.name} - ${article.multiple} - ${article.factor}`,
+      name: `${article.product.name} - ${article.multiple} - ${article.factor}${article.product.description ? ` - ${article.product.description}` : ''}`,
     }));
   }, [articles]);
 
@@ -197,13 +198,18 @@ function ArticlesSearch({
         found: false,
       });
       setSelectedDrop(null);
-
-
-
-
-      
     }
   }
+
+  useEffect(() => {
+    if (!visible) {
+      setBarcodeScan({
+        barcode: null,
+        modal: false,
+        found: null,
+      });
+    }
+  }, [visible]);
 
   return (
     <Portal>

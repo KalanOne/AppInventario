@@ -22,6 +22,10 @@ const colors = [
     light: '#9F6C2C',
     dark: '#FDDDB9',
   },
+  {
+    light: '#F6B9FD', //8a4c91
+    dark: '#f6b9fd',
+  },
 ];
 
 export function ThemeEditor() {
@@ -61,7 +65,7 @@ export function ThemeEditor() {
 
       <Flex gap={20}>
         <Text>Select source color</Text>
-        <Flex gap={20} direction="row" justify="center">
+        <Flex gap={20} direction="row" justify="center" wrap='wrap'>
           {colors.map(({ light, dark }) => {
             const color = colorScheme === 'dark' ? dark : light;
             return (

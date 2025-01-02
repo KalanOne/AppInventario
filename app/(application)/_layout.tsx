@@ -74,7 +74,7 @@ export default function TabLayout() {
           },
           drawerInactiveTintColor: colors.colors.secondary,
           drawerActiveTintColor: colors.colors.primary,
-          unmountOnBlur: true,
+          // unmountOnBlur: true,
         }}
       >
         <Drawer.Screen
@@ -103,6 +103,7 @@ export default function TabLayout() {
                 color={color}
               />
             ),
+            unmountOnBlur: true,
           }}
         />
         <Drawer.Screen

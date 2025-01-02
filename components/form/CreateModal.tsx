@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Modal, Portal, Text } from 'react-native-paper';
 
@@ -113,6 +113,7 @@ function CreateModal({
                     mode="contained-tonal"
                     style={styles.button}
                     disabled={isProcessing}
+                    loading={isProcessing}
                   >
                     Create
                   </Button>

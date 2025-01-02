@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { SetStateAction, useCallback, useState } from 'react';
 import {
   FormProvider,
   useFieldArray,
@@ -9,28 +9,43 @@ import { Keyboard, ScrollView, StyleSheet } from 'react-native';
 import {
   Button,
   DataTable,
+  Dialog,
   Divider,
   IconButton,
+  Portal,
   Text,
   TextInput,
 } from 'react-native-paper';
+import { DatePickerModal } from 'react-native-paper-dates';
 import { z } from 'zod';
 
+import { createTransactions } from '@/api/transacciones.api';
 import { Flex } from '@/components/Flex';
+import { CCheckBox } from '@/components/form/CCheckBox';
 import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CreateModal } from '@/components/form/CreateModal';
 import { CTextInput } from '@/components/form/CTextInput';
+import { UpdateModal } from '@/components/form/UpdateModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ArticlesSearch } from '@/components/Searchs/ArticlesSearch';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
+import { useCrudMutationF } from '@/hooks/crud';
+import { useProgressStore } from '@/stores/progress';
 import { Product } from '@/types/searchs';
+import { TransactionCreate } from '@/types/transacciones';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { el } from 'react-native-paper-dates';
+import { CalendarDate } from 'react-native-paper-dates/lib/typescript/Date/Calendar';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function NuevaTransaccionScreen() {
   const color = useAppTheme();
   const [unitAddVisible, setUnitAddVisible] = useState(false);
+  const [unitUpdate, setUnitUpdate] = useState<{
+    modal: boolean;
+    index: number;
+    item: TransactionUnitInputType;
+  }>({ modal: false, index: 0, item: transactionUnitDefaultValues });
   const [productSearch, setProductSearch] = useState<{
     modal: boolean;
     origin: 'update' | 'add' | null;
@@ -48,6 +63,34 @@ export default function NuevaTransaccionScreen() {
     origin: null,
     input: null,
   });
+  const addProgress = useProgressStore((state) => state.addProgress);
+  const removeProgress = useProgressStore((state) => state.removeProgress);
+  const [localNotification, setLocalNotification] = useState<{
+    visible: boolean;
+    message: string;
+  }>({ visible: false, message: '' });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    visible: boolean;
+    data: TransactionCreateInputType;
+  }>({
+    visible: false,
+    data: transactionCreateDefaultValues,
+  });
+  const [date, setDate] = useState<CalendarDate>(new Date());
+  const [dateVisible, setDateVisible] = useState(false);
+  const queryClient = useQueryClient();
+
+  const onDismissSingle = useCallback(() => {
+    setDateVisible(false);
+  }, [setDateVisible]);
+
+  const onConfirmSingle = useCallback(
+    (params: { date: CalendarDate }) => {
+      setDateVisible(false);
+      setDate(params.date);
+    },
+    [setDateVisible, setDate]
+  );
 
   const transactionCreateForm = useForm<
     TransactionCreateInputType,
@@ -60,7 +103,7 @@ export default function NuevaTransaccionScreen() {
 
   const transactionCreateArrayForm = useFieldArray({
     control: transactionCreateForm.control,
-    name: 'unit',
+    name: 'units',
   });
 
   const transactionUnitCreateForm = useForm<
@@ -72,40 +115,111 @@ export default function NuevaTransaccionScreen() {
     resolver: zodResolver(transactionUnitSchema),
   });
 
-  const [type, unit] = useWatch({
-    control: transactionCreateForm.control,
-    name: ['type', 'unit'],
+  const transactionUnitUpdateForm = useForm<
+    TransactionUnitInputType,
+    unknown,
+    TransactionUnitSchemaType
+  >({
+    defaultValues: transactionUnitDefaultValues,
+    resolver: zodResolver(transactionUnitSchema),
   });
+
+  const [type, units] = useWatch({
+    control: transactionCreateForm.control,
+    name: ['type', 'units'],
+  });
+
+  const transactionCreateMutation = useCrudMutationF(
+    createTransactions,
+    '',
+    'create',
+    {
+      onSuccess: async () => {
+        transactionCreateForm.reset(transactionCreateDefaultValues);
+        transactionCreateArrayForm.replace([]);
+        await queryClient.invalidateQueries({ queryKey: ['articlesSearch'] });
+        await queryClient.invalidateQueries({ queryKey: ['productsSearch'] });
+      },
+      onError(error) {
+        if (
+          error.response?.data &&
+          typeof error.response.data === 'object' &&
+          'message' in error.response.data
+        ) {
+          setLocalNotification({
+            visible: true,
+            message: `${error.response.data.message}`,
+          });
+        } else {
+          setLocalNotification({
+            visible: true,
+            message: 'An error occurred while creating the transaction',
+          });
+        }
+      },
+    }
+  );
 
   function addUnitPress() {
     setUnitAddVisible(true);
   }
 
   function addUnit(data: TransactionUnitInputType) {
-    transactionCreateArrayForm.append(data);
+    addProgress('addUnit');
+    const existingUnitIndex = units.findIndex(
+      (unit) => unit.barcode === data.barcode && data.serial == unit.serial
+      // &&
+      // unit.productId === data.productId &&
+      // unit.articleId === data.articleId &&
+      // unit.serial === data.serial &&
+      // unit.factor === data.factor &&
+      // unit.multiple === data.multiple
+    );
+
+    if (existingUnitIndex !== -1) {
+      if (data.serial) {
+        setLocalNotification({
+          visible: true,
+          message: 'Serial has been added to the transaction before',
+        });
+        removeProgress('addUnit');
+        return;
+      }
+      const existingUnit = units[existingUnitIndex];
+      const updatedUnit = {
+        ...existingUnit,
+        quantity: Number(existingUnit.quantity) + Number(data.quantity),
+      };
+      transactionCreateArrayForm.update(existingUnitIndex, updatedUnit);
+    } else {
+      transactionCreateArrayForm.append(data);
+    }
     transactionUnitCreateForm.reset();
     setUnitAddVisible(false);
+    removeProgress('addUnit');
   }
 
   function removeUnit(unitDelete: TransactionUnitInputType, index: number) {
-    const unitLength = unit.length;
-    const filteredUnit = unit.filter((item) => item != unitDelete);
+    addProgress('removeUnit');
+    const unitLength = units.length;
+    const filteredUnit = units.filter((item) => item != unitDelete);
     const unitLengthFiltered = filteredUnit.length;
 
     if (unitLength - 1 === unitLengthFiltered) {
       transactionCreateForm.setValue(
-        'unit',
-        unit.filter((item) => item != unitDelete)
+        'units',
+        units.filter((item) => item != unitDelete)
       );
     } else {
-      if (unit[index] == unitDelete) {
+      if (units[index] == unitDelete) {
         transactionCreateArrayForm.remove(index);
       }
     }
+    removeProgress('removeUnit');
   }
 
-  function handleSearchProductCreatePress() {
-    setProductSearch({ modal: true, origin: 'add' });
+  function handleSearchProductPress(origin: 'add' | 'update') {
+    setProductSearch({ modal: true, origin });
     Keyboard.dismiss();
   }
 
@@ -121,9 +235,12 @@ export default function NuevaTransaccionScreen() {
         break;
 
       case 'update':
-        // articleUpdateForm.setValue('productId', product.id);
-        // articleUpdateForm.setValue('name', product.name);
-        // articleUpdateForm.setValue('description', product.description || '');
+        transactionUnitUpdateForm.setValue('productId', product.id);
+        transactionUnitUpdateForm.setValue('name', product.name);
+        transactionUnitUpdateForm.setValue(
+          'description',
+          product.description || ''
+        );
         break;
 
       default:
@@ -132,8 +249,8 @@ export default function NuevaTransaccionScreen() {
     setProductSearch((prev) => ({ ...prev, modal: false }));
   }
 
-  function handleSearchArticleCreatePress() {
-    setArticleSearch({ modal: true, origin: 'add' });
+  function handleSearchArticlePress(origin: 'add' | 'update') {
+    setArticleSearch({ modal: true, origin });
   }
 
   function handleFoundArticle(article: any) {
@@ -150,6 +267,19 @@ export default function NuevaTransaccionScreen() {
         );
         transactionUnitCreateForm.setValue('productId', article.product.id);
         transactionUnitCreateForm.setValue('name', article.product.name);
+        break;
+      case 'update':
+        transactionUnitUpdateForm.setValue('articleId', article.id);
+        transactionUnitUpdateForm.setValue('barcode', article.barcode);
+        transactionUnitUpdateForm.setValue('multiple', article.multiple);
+        transactionUnitUpdateForm.setValue('factor', article.factor);
+        transactionUnitUpdateForm.setValue('name', article.product.name);
+        transactionUnitUpdateForm.setValue(
+          'description',
+          article.product.description || ''
+        );
+        transactionUnitUpdateForm.setValue('productId', article.product.id);
+        transactionUnitUpdateForm.setValue('name', article.product.name);
         break;
       default:
         break;
@@ -170,30 +300,133 @@ export default function NuevaTransaccionScreen() {
         transactionUnitCreateForm.setValue('barcode', barcode);
       } else if (barcodeScan.input === 'serial') {
         transactionUnitCreateForm.setValue('serial', barcode);
+        transactionUnitCreateForm.setValue('quantity', 1);
+      }
+    } else if (barcodeScan.origin === 'update') {
+      if (barcodeScan.input === 'barcode') {
+        transactionUnitUpdateForm.setValue('barcode', barcode);
+      } else if (barcodeScan.input === 'serial') {
+        transactionUnitUpdateForm.setValue('serial', barcode);
+        transactionUnitUpdateForm.setValue('quantity', 1);
       }
     }
     setBarcodeScan((prev) => ({ ...prev, modal: false }));
   }
 
+  function handleRowPress(item: TransactionUnitInputType, index: number) {
+    transactionUnitUpdateForm.reset(item);
+    setUnitUpdate({
+      modal: true,
+      index,
+      item,
+    });
+  }
+
+  function updateUnit(data: TransactionUnitInputType) {
+    addProgress('updateUnit');
+    const unitsFiltered = units.filter((item) => item != unitUpdate.item);
+
+    const existingUnitIndex = unitsFiltered.findIndex(
+      (unit) => unit.barcode === data.barcode && data.serial == unit.serial
+      // &&
+      //   unit.productId === data.productId &&
+      //   unit.articleId === data.articleId &&
+      //   unit.serial === data.serial &&
+      //   unit.factor === data.factor &&
+      //   unit.multiple === data.multiple
+    );
+
+    if (existingUnitIndex !== -1) {
+      if (data.serial) {
+        setLocalNotification({
+          visible: true,
+          message: 'Serial has been added to the transaction before',
+        });
+        removeProgress('updateUnit');
+        return;
+      }
+
+      const existingUnit = unitsFiltered[existingUnitIndex];
+      const updatedUnit = {
+        ...existingUnit,
+        quantity: Number(existingUnit.quantity) + Number(data.quantity),
+      };
+      unitsFiltered[existingUnitIndex] = updatedUnit;
+      transactionCreateForm.setValue('units', unitsFiltered);
+    } else {
+      unitsFiltered.push(data);
+      transactionCreateForm.setValue('units', unitsFiltered);
+    }
+    setUnitUpdate({
+      modal: false,
+      index: 0,
+      item: transactionUnitDefaultValues,
+    });
+    removeProgress('updateUnit');
+  }
+
+  function handleSendTransaction(data: TransactionCreateInputType) {
+    transactionCreateMutation.mutate({
+      data: {
+        ...(data as TransactionCreate),
+        transactionDate: date?.toISOString() || '',
+      },
+      extras: undefined,
+    });
+  }
+
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
+      {/* Main Content - Table, Form */}
       <FormProvider {...transactionCreateForm}>
-        <Flex padding={10}>
+        <Flex
+          style={{
+            paddingTop: 10,
+            paddingRight: 10,
+            paddingBottom: 0,
+            paddingLeft: 10,
+          }}
+          flex={1}
+        >
+          <TextInput
+            value={date ? `${date.toLocaleDateString()}` : ''}
+            right={
+              <TextInput.Icon
+                icon="calendar"
+                onPress={() => setDateVisible(true)}
+              />
+            }
+          />
+          <DatePickerModal
+            locale="es"
+            mode="single"
+            visible={dateVisible}
+            onDismiss={onDismissSingle}
+            date={date}
+            onConfirm={onConfirmSingle}
+          />
           <CDropdownInput
             name="type"
             label="Tipo de transacción"
             data={[
-              { key: 'income', value: 'Ingreso' },
-              { key: 'expense', value: 'Egreso' },
+              { key: 'ENTRY', value: 'Ingreso' },
+              { key: 'EXIT', value: 'Egreso' },
             ]}
             labelField={'value'}
             valueField={'key'}
           />
           <CTextInput
-            label={type == 'income' ? 'Emisor' : 'Receptor'}
+            label={type == 'ENTRY' ? 'Emisor' : 'Receptor'}
             name="emitter"
           />
+          <CTextInput label={'Folio'} name="folio" />
           <Flex direction="row">
+            <IconButton
+              icon="plus"
+              mode="contained"
+              onPress={addUnitPress}
+              style={{ marginTop: 10 }}
+            />
             <Text
               style={{
                 flex: 1,
@@ -202,18 +435,26 @@ export default function NuevaTransaccionScreen() {
               }}
               variant="titleMedium"
             >
-              {type == 'income'
-                ? 'Productos a ingresar'
-                : 'Productos a egresar'}
+              {type == 'ENTRY' ? 'Productos a ingresar' : 'Productos a egresar'}
             </Text>
             <IconButton
-              icon="plus"
+              icon="send"
               mode="contained"
-              onPress={addUnitPress}
+              onPress={transactionCreateForm.handleSubmit((data) => {
+                setConfirmDialog({ visible: true, data });
+              })}
               style={{ marginTop: 10 }}
+              disabled={!transactionCreateForm.formState.isValid}
             />
           </Flex>
-          <DataTable style={{ height: '60%' }}>
+          <DataTable
+            style={{
+              flex: 1,
+              // Lo siguiente es para que tome el 100% del ancho
+              marginHorizontal: -10,
+              width: '110%',
+            }}
+          >
             <DataTable.Header>
               <DataTable.Title style={styles.columLong}>
                 Product name
@@ -231,13 +472,13 @@ export default function NuevaTransaccionScreen() {
               </DataTable.Title>
             </DataTable.Header>
             <ScrollView style={styles.scrollView}>
-              {unit.length > 0 &&
-                unit.map((item, index) => (
+              {units.length > 0 &&
+                units.map((item, index) => (
                   <DataTable.Row
                     key={index}
-                    // onPress={() => {
-                    //   handleRowPress(item);
-                    // }}
+                    onPress={() => {
+                      handleRowPress(item, index);
+                    }}
                   >
                     <DataTable.Cell style={styles.columLong}>
                       {item.name}
@@ -260,7 +501,7 @@ export default function NuevaTransaccionScreen() {
                     </DataTable.Cell>
                   </DataTable.Row>
                 ))}
-              {!unit.length && (
+              {!units.length && (
                 <DataTable.Row>
                   <DataTable.Cell centered style={styles.columnNoData}>
                     No data
@@ -269,20 +510,9 @@ export default function NuevaTransaccionScreen() {
               )}
             </ScrollView>
           </DataTable>
-          <Flex direction="row" justify="center">
-            <Button
-              onPress={transactionCreateForm.handleSubmit((data) => {
-                console.log(data);
-              })}
-              mode="contained"
-              style={{ marginTop: 10 }}
-              disabled={!transactionCreateForm.formState.isValid}
-            >
-              Crear transacción
-            </Button>
-          </Flex>
         </Flex>
       </FormProvider>
+      {/* Create Modal */}
       <CreateModal
         form={transactionUnitCreateForm}
         visible={unitAddVisible}
@@ -310,7 +540,7 @@ export default function NuevaTransaccionScreen() {
           right={
             <TextInput.Icon
               icon="magnify"
-              onPress={handleSearchProductCreatePress}
+              onPress={() => handleSearchProductPress('add')}
               mode="contained"
             />
           }
@@ -319,8 +549,8 @@ export default function NuevaTransaccionScreen() {
         <CTextInput name="description" label="Description" multiline />
 
         <Divider style={{ marginVertical: 5 }} bold />
-
         <Text>Artículo</Text>
+
         <CTextInput
           label="Article ID"
           name="articleId"
@@ -332,7 +562,9 @@ export default function NuevaTransaccionScreen() {
           right={
             <TextInput.Icon
               icon="magnify"
-              onPress={handleSearchArticleCreatePress}
+              onPress={() => {
+                handleSearchArticlePress('add');
+              }}
               mode="contained"
             />
           }
@@ -357,6 +589,9 @@ export default function NuevaTransaccionScreen() {
           type="number"
         />
 
+        <Divider style={{ marginVertical: 5 }} bold />
+        <Text>Unidad</Text>
+
         <CTextInput
           label="Serial"
           name="serial"
@@ -374,7 +609,115 @@ export default function NuevaTransaccionScreen() {
           type="number"
           keyboardType="numeric"
         />
+        <CCheckBox
+          name="afectation"
+          label="Afecta a inventrario"
+          helperText="Si la cantidad afecta al inventario o no"
+        />
       </CreateModal>
+      {/* Update Modal */}
+      <UpdateModal
+        form={transactionUnitUpdateForm}
+        visible={unitUpdate.modal}
+        handleUpdateDismiss={() => {
+          setUnitUpdate((prev) => ({ ...prev, modal: false }));
+        }}
+        handleUpdateApply={transactionUnitUpdateForm.handleSubmit(updateUnit)}
+        handleUpdateCancel={() => {
+          transactionUnitUpdateForm.reset(transactionUnitDefaultValues);
+          setUnitUpdate((prev) => ({ ...prev, modal: false }));
+        }}
+        handleUpdateReset={() => {
+          transactionUnitUpdateForm.reset(unitUpdate.item);
+        }}
+      >
+        <Text>Producto</Text>
+        <CTextInput
+          name="productId"
+          label="Product Id"
+          helperText={
+            'Si no se selecciona un producto, se creará uno nuevo (<=0 o vacio)'
+          }
+          type="number"
+          keyboardType="numeric"
+          right={
+            <TextInput.Icon
+              icon="magnify"
+              onPress={() => handleSearchProductPress('update')}
+              mode="contained"
+            />
+          }
+        />
+        <CTextInput name="name" label="Name" />
+        <CTextInput name="description" label="Description" multiline />
+
+        <Divider style={{ marginVertical: 5 }} bold />
+        <Text>Artículo</Text>
+
+        <CTextInput
+          label="Article ID"
+          name="articleId"
+          helperText={
+            'Si no se selecciona un articulo, se creará uno nuevo (<=0 o vacio)'
+          }
+          type="number"
+          keyboardType="numeric"
+          right={
+            <TextInput.Icon
+              icon="magnify"
+              onPress={() => {
+                handleSearchArticlePress('update');
+              }}
+              mode="contained"
+            />
+          }
+        />
+        <CTextInput
+          name="barcode"
+          label="Barcode"
+          flexStyles={{ flex: 1 }}
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('update', 'barcode')}
+              mode="contained"
+            />
+          }
+        />
+        <CTextInput name="multiple" label="Multiple" />
+        <CTextInput
+          name="factor"
+          label="Factor"
+          keyboardType="numeric"
+          type="number"
+        />
+
+        <Divider style={{ marginVertical: 5 }} bold />
+        <Text>Unidad</Text>
+
+        <CTextInput
+          label="Serial"
+          name="serial"
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('update', 'serial')}
+              mode="contained"
+            />
+          }
+        />
+        <CTextInput
+          label="Quantity"
+          name="quantity"
+          type="number"
+          keyboardType="numeric"
+        />
+        <CCheckBox
+          name="afectation"
+          label="Afecta a inventrario"
+          helperText="Si la cantidad afecta al inventario o no"
+        />
+      </UpdateModal>
       <ProductsSearch
         visible={productSearch.modal}
         handleSearchDismissCancel={() =>
@@ -396,6 +739,57 @@ export default function NuevaTransaccionScreen() {
         }
         onBarcodeScanned={handleBarcodeScan}
       />
+      <Portal>
+        <Dialog
+          visible={localNotification.visible}
+          onDismiss={() => {
+            setLocalNotification((prev) => ({ ...prev, visible: false }));
+          }}
+        >
+          <Dialog.Title>Alert</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">{localNotification.message}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                setLocalNotification((prev) => ({ ...prev, visible: false }));
+              }}
+            >
+              Ok
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+      <Portal>
+        <Dialog
+          visible={confirmDialog.visible}
+          onDismiss={() => {
+            setConfirmDialog((prev) => ({ ...prev, visible: false }));
+          }}
+        >
+          <Dialog.Content>
+            <Text>¿Seguro que quieres enviar la transacción?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                setConfirmDialog((prev) => ({ ...prev, visible: false }));
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onPress={() => {
+                handleSendTransaction(confirmDialog.data);
+                setConfirmDialog((prev) => ({ ...prev, visible: false }));
+              }}
+            >
+              Enviar
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Flex>
   );
 }
@@ -421,6 +815,7 @@ const transactionUnitSchema = z
       .refine((val) => val !== '', {
         message: 'Quantity cannot be empty',
       }),
+    afectation: z.boolean(),
   })
   .superRefine((val, ctx) => {
     if (val.serial && val.quantity != 1) {
@@ -437,7 +832,30 @@ const transactionUnitSchema = z
           'Serial must be empty when quantity is not 1 or quantity must be 1 when serial is not empty',
         path: ['quantity'],
       });
-    } 
+    }
+    if (
+      val.serial &&
+      (val.factor != 1 || val.multiple.toLowerCase() != 'unidad')
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Serial must be empty when factor is not 1 and multiple is not "unidad" or factor must be 1 and multiple must be "unidad when serial is not empty',
+        path: ['serial'],
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Serial must be empty when factor is not 1 and multiple is not "unidad" or factor must be 1 and multiple must be "unidad when serial is not empty',
+        path: ['factor'],
+      });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'Serial must be empty when factor is not 1 and multiple is not "unidad" or factor must be 1 and multiple must be "unidad when serial is not empty',
+        path: ['multiple'],
+      });
+    }
   });
 
 type TransactionUnitSchemaType = z.infer<typeof transactionUnitSchema>;
@@ -454,16 +872,18 @@ const transactionUnitDefaultValues: TransactionUnitInputType = {
   factor: '',
   serial: '',
   quantity: '',
+  afectation: true,
 };
 
 const transactionCreateSchema = z.object({
   type: z
-    .union([z.enum(['income', 'expense']), z.literal('')])
+    .union([z.enum(['ENTRY', 'EXIT']), z.literal('')])
     .refine((val) => val !== '', {
       message: 'Type cannot be empty',
     }),
   emitter: z.string().min(1).max(255),
-  unit: z.array(transactionUnitSchema).min(1),
+  folio: z.string().min(1).max(255),
+  units: z.array(transactionUnitSchema).min(1),
 });
 
 type TransactionCreateSchemaType = z.infer<typeof transactionCreateSchema>;
@@ -473,7 +893,8 @@ type TransactionCreateInputType = z.input<typeof transactionCreateSchema>;
 const transactionCreateDefaultValues: TransactionCreateInputType = {
   type: '',
   emitter: '',
-  unit: [],
+  folio: '',
+  units: [],
 };
 
 const styles = StyleSheet.create({
@@ -481,7 +902,8 @@ const styles = StyleSheet.create({
     maxHeight: '100%',
   },
   columLong: {
-    flex: 3,
+    // flex: 3,
+    flex: 4,
   },
   columnMid: {
     flex: 2,

@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { ReactNode, useState } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Modal, Portal, Text } from 'react-native-paper';
 
 import { Flex } from '../Flex';
@@ -13,8 +13,9 @@ interface UpdateModalProps {
   handleUpdateDismiss: () => void;
   children: ReactNode;
   form: UseFormReturn<any, unknown, any>;
-  handleUpdateApply?: () => void;
+  handleUpdateApply?: () => Promise<void> | void;
   handleUpdateCancel?: () => void;
+  handleUpdateReset?: () => void;
 }
 
 function UpdateModal({
@@ -24,8 +25,10 @@ function UpdateModal({
   form,
   handleUpdateApply,
   handleUpdateCancel,
+  handleUpdateReset,
 }: UpdateModalProps) {
   const color = useAppTheme();
+  const [isProcessing, setIsProcessing] = useState(false);
   const styles = StyleSheet.create({
     containerStyle: {
       backgroundColor: color.colors.surfaceBright,
@@ -47,6 +50,16 @@ function UpdateModal({
       paddingHorizontal: 10,
     },
   });
+  async function handleUpdateApplyLocal() {
+    if (handleUpdateApply) {
+      setIsProcessing(true);
+      try {
+        await handleUpdateApply();
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+  }
 
   return (
     <Portal>
@@ -60,7 +73,9 @@ function UpdateModal({
             Update
           </Text>
           <FormProvider {...form}>
-            <Flex padding={10}>{children}</Flex>
+            <ScrollView style={{ maxHeight: '80%', marginBottom: 10 }}>
+              {children}
+            </ScrollView>
           </FormProvider>
           {handleUpdateApply || handleUpdateCancel ? (
             <Flex
@@ -82,11 +97,22 @@ function UpdateModal({
               </Flex>
 
               <Flex direction="row" align="center" gap={10} justify="flex-end">
-                {handleUpdateApply && (
+                {handleUpdateReset && (
                   <Button
-                    onPress={handleUpdateApply}
+                    onPress={handleUpdateReset}
                     mode="contained-tonal"
                     style={styles.button}
+                  >
+                    Reset
+                  </Button>
+                )}
+                {handleUpdateApply && (
+                  <Button
+                    onPress={handleUpdateApplyLocal}
+                    mode="contained-tonal"
+                    style={styles.button}
+                    disabled={isProcessing}
+                    loading={isProcessing}
                   >
                     Update
                   </Button>

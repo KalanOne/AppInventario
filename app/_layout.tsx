@@ -12,6 +12,9 @@ import { NotificationBar } from '@/components/general/NotificationBar';
 import { Animated, PanResponder } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { registerTranslation, es } from 'react-native-paper-dates';
+
+registerTranslation('es', es);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,10 +26,11 @@ const queryClient = new QueryClient({
         else if (failureCount < 2) return true;
         else return false;
       },
-      refetchInterval: 600000,
+      // refetchInterval: 600000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: 'always',
       staleTime: 600000,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   },
 });
