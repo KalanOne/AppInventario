@@ -7,6 +7,7 @@ export { createTransactions };
 async function createTransactions(
   params: CreateApiFunctionParams<TransactionCreate>
 ) {
+  console.log(params.data);
   return await http<TransactionCreate>({
     method: 'POST',
     path: 'transactions/create',

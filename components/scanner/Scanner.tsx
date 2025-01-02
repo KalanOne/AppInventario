@@ -1,4 +1,4 @@
-import { BarcodeScanningResult, CameraType, CameraView } from 'expo-camera';
+import { BarcodeScanningResult, CameraView } from 'expo-camera';
 import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
 import {
@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
 } from 'react-native-paper';
+import { Audio } from 'expo-av';
 
 import { Flex } from '@/components/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
@@ -28,8 +29,18 @@ function Scanner({ visible, onDismissCancel, onBarcodeScanned }: ScannerProps) {
   const color = useAppTheme();
   const [flash, setFlash] = useState<boolean>(false);
   const [zoom, setZoom] = useState<number>(0);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+
+  async function playSound() {
+    const { sound } = await Audio.Sound.createAsync(
+      require('../../assets/audio/store-scanner-beep-90395.mp3')
+    );
+    setSound(sound);
+    await sound.playAsync();
+  }
 
   function barCodeScanned(scanningResult: BarcodeScanningResult) {
+    playSound();
     if (scanningResult.raw) {
       if (scanningResult.raw == scanningResult.data) {
         onBarcodeScanned(scanningResult.data);
@@ -96,6 +107,14 @@ function Scanner({ visible, onDismissCancel, onBarcodeScanned }: ScannerProps) {
   useEffect(() => {
     Keyboard.dismiss();
   }, [visible]);
+
+  useEffect(() => {
+    if (sound) {
+      return () => {
+        sound.unloadAsync();
+      };
+    }
+  }, [sound]);
 
   return (
     <Portal>

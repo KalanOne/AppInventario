@@ -37,6 +37,7 @@ import { TransactionCreate } from '@/types/transacciones';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarDate } from 'react-native-paper-dates/lib/typescript/Date/Calendar';
 import { useQueryClient } from '@tanstack/react-query';
+import { deleteEmptyProperties } from '@/utils/other';
 
 export default function NuevaTransaccionScreen() {
   const color = useAppTheme();
@@ -166,6 +167,7 @@ export default function NuevaTransaccionScreen() {
 
   function addUnit(data: TransactionUnitInputType) {
     addProgress('addUnit');
+    data = deleteEmptyProperties(data);
     const existingUnitIndex = units.findIndex(
       (unit) => unit.barcode === data.barcode && data.serial == unit.serial
       // &&
@@ -323,6 +325,7 @@ export default function NuevaTransaccionScreen() {
   }
 
   function updateUnit(data: TransactionUnitInputType) {
+    data = deleteEmptyProperties(data);
     addProgress('updateUnit');
     const unitsFiltered = units.filter((item) => item != unitUpdate.item);
 
