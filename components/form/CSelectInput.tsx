@@ -1,6 +1,6 @@
 import { HelperText } from 'react-native-paper';
 import { Controller } from 'react-hook-form';
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { useEffect, useState } from 'react';
 import {
   MultipleSelectList,

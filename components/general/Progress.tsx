@@ -2,7 +2,7 @@ import { FC } from 'react';
 import { ThemedView } from '../ThemedView';
 import { ActivityIndicator, Portal } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { HextoRGBA } from '@/utils/color';
 

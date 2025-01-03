@@ -1,4 +1,4 @@
-import { Flex } from '@/components/Flex';
+import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet } from 'react-native';

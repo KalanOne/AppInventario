@@ -20,7 +20,7 @@ import { DatePickerModal } from 'react-native-paper-dates';
 import { z } from 'zod';
 
 import { createTransactions } from '@/api/transacciones.api';
-import { Flex } from '@/components/Flex';
+import { Flex } from '@/components/UI/Flex';
 import { CCheckBox } from '@/components/form/CCheckBox';
 import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CreateModal } from '@/components/form/CreateModal';
@@ -399,6 +399,7 @@ export default function NuevaTransaccionScreen() {
                 onPress={() => setDateVisible(true)}
               />
             }
+            label={'Fecha de la transacción'}
           />
           <DatePickerModal
             locale="es"
@@ -534,7 +535,7 @@ export default function NuevaTransaccionScreen() {
         <Text>Producto</Text>
         <CTextInput
           name="productId"
-          label="Product Id"
+          label="Product ID"
           helperText={
             'Si no se selecciona un producto, se creará uno nuevo (<=0 o vacio)'
           }
@@ -637,7 +638,7 @@ export default function NuevaTransaccionScreen() {
         <Text>Producto</Text>
         <CTextInput
           name="productId"
-          label="Product Id"
+          label="Product ID"
           helperText={
             'Si no se selecciona un producto, se creará uno nuevo (<=0 o vacio)'
           }

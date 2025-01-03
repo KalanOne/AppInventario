@@ -11,7 +11,7 @@ import {
 } from 'react-native-paper';
 import { Audio } from 'expo-av';
 
-import { Flex } from '@/components/Flex';
+import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 
 export { Scanner };
@@ -32,11 +32,15 @@ function Scanner({ visible, onDismissCancel, onBarcodeScanned }: ScannerProps) {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   async function playSound() {
-    const { sound } = await Audio.Sound.createAsync(
-      require('../../assets/audio/store-scanner-beep-90395.mp3')
-    );
-    setSound(sound);
-    await sound.playAsync();
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../../assets/audio/store-scanner-beep-90395.mp3')
+      );
+      setSound(sound);
+      await sound.playAsync();
+    } catch (error) {
+      console.log('Error al reproducir audio', error);
+    }
   }
 
   function barCodeScanned(scanningResult: BarcodeScanningResult) {

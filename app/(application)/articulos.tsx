@@ -16,7 +16,7 @@ import {
   getArticles,
   updateArticles,
 } from '@/api/articulos.api';
-import { Flex } from '@/components/Flex';
+import { Flex } from '@/components/UI/Flex';
 import { CreateModal } from '@/components/form/CreateModal';
 import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';

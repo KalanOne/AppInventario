@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { StyleSheet } from 'react-native';
 import { getArticlesSearch } from '@/api/searchs.api';
@@ -13,11 +13,13 @@ import {
   Text,
   TextInput,
 } from 'react-native-paper';
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { Dropdown } from 'react-native-element-dropdown';
 import { AntDesign } from '@expo/vector-icons';
 import { Article, FormattedArticle } from '@/types/searchs';
 import { Scanner } from '../scanner/Scanner';
+import { useNotification } from '@/stores/notificationStore';
+import { router, useFocusEffect } from 'expo-router';
 
 export { ArticlesSearch };
 
@@ -46,6 +48,8 @@ function ArticlesSearch({
     modal: false,
     found: null,
   });
+  const [firstLoad, setFirstLoad] = useState(true);
+  const addNotification = useNotification((state) => state.addNotification);
 
   const styles = StyleSheet.create({
     containerStyle: {
@@ -135,7 +139,7 @@ function ArticlesSearch({
   useProgressQuery(articlesSearchQuery, 'articlesSearch');
   const articles = articlesSearchQuery.data ?? [];
 
-  const formattedArticles = useMemo(() => {
+  const formattedArticles: FormattedArticle[] = useMemo(() => {
     return articles.map((article) => ({
       ...article,
       name: `${article.product.name} - ${article.multiple} - ${article.factor}${article.product.description ? ` - ${article.product.description}` : ''}`,
@@ -210,6 +214,35 @@ function ArticlesSearch({
       });
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (articlesSearchQuery.isError && !articlesSearchQuery.isLoading) {
+      if (articlesSearchQuery.error.status === 401) {
+        addNotification({
+          message: 'Session expired',
+          code: '401',
+        });
+        router.push('/logout');
+      } else {
+        addNotification({
+          message: articlesSearchQuery.error.message,
+          code: articlesSearchQuery.error.status
+            ? articlesSearchQuery.error.status.toString()
+            : 'NA',
+        });
+      }
+    }
+  }, [articlesSearchQuery.isError]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (firstLoad) {
+        setFirstLoad(false);
+        return;
+      }
+      articlesSearchQuery.refetch();
+    }, [])
+  );
 
   return (
     <Portal>

@@ -2,7 +2,7 @@ import { ViewStyle } from 'react-native';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { Checkbox, CheckboxProps, HelperText } from 'react-native-paper';
 import { Controller } from 'react-hook-form';
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 
 type CCheckBoxProps = {
   name: string;

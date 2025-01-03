@@ -134,12 +134,19 @@ function useCrudQuery<E, T>({
   const addNotification = useNotification((state) => state.addNotification);
 
   useEffect(() => {
-    if (query.isError && !query.isLoading && query.error.status === 401) {
-      addNotification({
-        message: 'Session expired',
-        code: '401',
-      });
-      router.push('/logout');
+    if (query.isError && !query.isLoading) {
+      if (query.error.status === 401) {
+        addNotification({
+          message: 'Session expired',
+          code: '401',
+        });
+        router.push('/logout');
+      } else {
+        addNotification({
+          message: query.error.message,
+          code: query.error.status ? query.error.status.toString() : 'NA',
+        });
+      }
     }
   }, [query.isError]);
 

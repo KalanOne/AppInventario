@@ -3,7 +3,7 @@ import { Controller } from 'react-hook-form';
 import { ViewStyle } from 'react-native';
 import { HelperText, TextInput, TextInputProps } from 'react-native-paper';
 
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 
 type CTextInputProps = {

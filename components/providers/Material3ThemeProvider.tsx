@@ -1,5 +1,5 @@
-import { createContext, useContext } from "react";
-import { StatusBar, Text, useColorScheme } from "react-native";
+import { createContext, useContext } from 'react';
+import { StatusBar, Text, useColorScheme } from 'react-native';
 import {
   MD3DarkTheme,
   MD3LightTheme,
@@ -7,13 +7,13 @@ import {
   Provider as PaperProvider,
   ProviderProps,
   useTheme,
-} from "react-native-paper";
-import { Flex } from "../Flex";
+} from 'react-native-paper';
+import { Flex } from '../UI/Flex';
 import {
   Material3Scheme,
   Material3Theme,
   useMaterial3Theme,
-} from "@pchmn/expo-material3-theme";
+} from '@pchmn/expo-material3-theme';
 
 type Material3ThemeProviderProps = {
   theme: Material3Theme;
@@ -38,7 +38,7 @@ export function Material3ThemeProvider({
   });
 
   const paperTheme =
-    colorScheme === "dark"
+    colorScheme === 'dark'
       ? { ...MD3DarkTheme, colors: theme.dark }
       : { ...MD3LightTheme, colors: theme.light };
 
@@ -47,7 +47,7 @@ export function Material3ThemeProvider({
       value={{ theme, updateTheme, resetTheme }}
     >
       <StatusBar
-        barStyle={colorScheme === "dark" ? "light-content" : "dark-content"}
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
@@ -64,7 +64,7 @@ export function useMaterial3ThemeContext() {
   const ctx = useContext(Material3ThemeProviderContext);
   if (!ctx) {
     throw new Error(
-      "useMaterial3ThemeContext must be used inside Material3ThemeProvider"
+      'useMaterial3ThemeContext must be used inside Material3ThemeProvider'
     );
   }
   return ctx;

@@ -2,7 +2,7 @@ import { ReactNode, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Modal, Portal, Text } from 'react-native-paper';
 
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
@@ -36,18 +36,19 @@ function FilterModal({
       margin: 10,
       borderRadius: 10,
       elevation: 5,
+      flex: 0.8,
     },
     title: {
       marginBottom: 10,
-      marginLeft: 10,
+      // marginLeft: 10,
     },
     button: {
       // margin: 5,
     },
     buttonsContainer: {
-      marginVertical: 10,
+      // marginVertical: 10,
       width: '100%',
-      paddingHorizontal: 10,
+      // paddingHorizontal: 10,
     },
   });
   async function handleFilterApplyLocal() {
@@ -68,12 +69,12 @@ function FilterModal({
         onDismiss={handleFilterDismiss}
         contentContainerStyle={styles.containerStyle}
       >
-        <Flex>
+        <Flex flex={1} paddingX={10}>
           <Text variant="titleLarge" style={styles.title}>
             Filter
           </Text>
           <FormProvider {...form}>
-            <ScrollView style={{ maxHeight: '80%', marginBottom: 10 }}>
+            <ScrollView style={{ flex: 1, marginBottom: 10 }}>
               {children}
             </ScrollView>
           </FormProvider>

@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { Button, Icon, Modal, Portal, Text } from 'react-native-paper';
 
-import { getProductsSearch } from '@/api/searchs.api';
+import { getTransactionsSearch } from '@/api/searchs.api';
 import { useProgressQuery } from '@/hooks/progress';
-import { Product } from '@/types/searchs';
+import { FormattedTransaction, TransactionSearch } from '@/types/searchs';
 import { AntDesign } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 
@@ -13,22 +13,26 @@ import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { router, useFocusEffect } from 'expo-router';
 import { useNotification } from '@/stores/notificationStore';
+import { format } from '@formkit/tempo';
 
-export { ProductsSearch };
-interface ProductsSearchProps {
+export { TransactionsSearch };
+
+interface TransactionsSearchProps {
   visible: boolean;
   handleSearchDismissCancel: () => void;
-  handleFoundProduct: (product: Product) => void;
+  handleFoundTransaction: (transaction: TransactionSearch) => void;
 }
 
-function ProductsSearch({
+function TransactionsSearch({
   visible,
   handleSearchDismissCancel,
-  handleFoundProduct,
-}: ProductsSearchProps) {
+  handleFoundTransaction,
+}: TransactionsSearchProps) {
   const color = useAppTheme();
   const [isFocus, setIsFocus] = useState(false);
-  const [selectedDrop, setSelectedDrop] = useState<Product | null>(null);
+  const [selectedDrop, setSelectedDrop] = useState<FormattedTransaction | null>(
+    null
+  );
   const [firstLoad, setFirstLoad] = useState(true);
   const addNotification = useNotification((state) => state.addNotification);
 
@@ -110,19 +114,31 @@ function ProductsSearch({
     },
   });
 
-  const productsSearchQuery = useQuery({
-    queryKey: ['productsSearch'],
+  const trasactionsSearchQuery = useQuery({
+    queryKey: ['trasactionsSearch'],
     queryFn: async () => {
-      return await getProductsSearch();
+      return getTransactionsSearch();
     },
     refetchInterval: 15 * 60000,
   });
-  useProgressQuery(productsSearchQuery, 'productsSearch');
-  const products = productsSearchQuery.data ?? [];
+  useProgressQuery(trasactionsSearchQuery, 'trasactionsSearch');
+  const transactions = trasactionsSearchQuery.data ?? [];
+
+  const formattedArticles: FormattedTransaction[] = useMemo(() => {
+    return transactions.map((transaction) => ({
+      ...transaction,
+      name: `${transaction.folio_number} - ${format({ date: transaction.createdAt, format: 'full', locale: 'es' })} - ${format({ date: transaction.transaction_date, format: 'full', locale: 'es' })} - ${transaction.transaction_type == 'ENTRY' ? 'Entrada' : 'Salida'} - ${transaction.user.first_name} ${transaction.user.last_name} - ${transaction.person_name}`,
+    }));
+  }, [transactions]);
 
   function handlefound() {
     if (selectedDrop) {
-      handleFoundProduct(selectedDrop);
+      transactions.find((transaction) => {
+        if (transaction.id == selectedDrop.id) {
+          handleFoundTransaction(transaction);
+        }
+        return transaction.id === selectedDrop.id;
+      });
       setSelectedDrop(null);
     } else {
       handleSearchDismissCancelLocal();
@@ -136,8 +152,8 @@ function ProductsSearch({
   }
 
   useEffect(() => {
-    if (productsSearchQuery.isError && !productsSearchQuery.isLoading) {
-      if (productsSearchQuery.error.status === 401) {
+    if (trasactionsSearchQuery.isError && !trasactionsSearchQuery.isLoading) {
+      if (trasactionsSearchQuery.error.status === 401) {
         addNotification({
           message: 'Session expired',
           code: '401',
@@ -145,14 +161,14 @@ function ProductsSearch({
         router.push('/logout');
       } else {
         addNotification({
-          message: productsSearchQuery.error.message,
-          code: productsSearchQuery.error.status
-            ? productsSearchQuery.error.status.toString()
+          message: trasactionsSearchQuery.error.message,
+          code: trasactionsSearchQuery.error.status
+            ? trasactionsSearchQuery.error.status.toString()
             : 'NA',
         });
       }
     }
-  }, [productsSearchQuery.isError]);
+  }, [trasactionsSearchQuery.isError]);
 
   useFocusEffect(
     useCallback(() => {
@@ -160,7 +176,7 @@ function ProductsSearch({
         setFirstLoad(false);
         return;
       }
-      productsSearchQuery.refetch();
+      trasactionsSearchQuery.refetch();
     }, [])
   );
 
@@ -173,7 +189,7 @@ function ProductsSearch({
       >
         <Flex>
           <Text variant="titleLarge" style={styles.title}>
-            Buscar productos
+            Buscar transacciones
           </Text>
           <Dropdown
             style={[
@@ -186,7 +202,7 @@ function ProductsSearch({
             iconStyle={DropDownStyles.iconStyle}
             containerStyle={DropDownStyles.containerStyle}
             itemTextStyle={DropDownStyles.itemTextStyle}
-            data={products}
+            data={formattedArticles}
             search
             maxHeight={300}
             labelField="name"

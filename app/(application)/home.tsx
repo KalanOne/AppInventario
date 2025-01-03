@@ -10,7 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Flex } from '@/components/Flex';
+import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { useStorageState } from '@/hooks/useStorageState';
 import { useNotification } from '@/stores/notificationStore';

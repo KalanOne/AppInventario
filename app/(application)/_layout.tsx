@@ -121,6 +121,20 @@ export default function TabLayout() {
           }}
         />
         <Drawer.Screen
+          name="transacciones"
+          options={{
+            drawerLabel: 'Transacciones',
+            title: 'Transacciones',
+            drawerIcon: ({ color, focused, size }) => (
+              <MaterialCommunityIcons
+                name={focused ? 'bank' : 'bank-outline'}
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
           name="logout"
           options={{
             drawerLabel: 'Logout',

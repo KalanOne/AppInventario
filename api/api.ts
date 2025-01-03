@@ -60,6 +60,7 @@ const http = async <T>({
         ? 'application/json'
         : 'multipart/form-data',
     },
+    timeout: 20000,
   };
 
   let response: AxiosResponse<T, T>;

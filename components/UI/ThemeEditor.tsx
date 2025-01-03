@@ -1,5 +1,5 @@
 import { useColorScheme } from 'react-native';
-import { useMaterial3ThemeContext } from './providers/Material3ThemeProvider';
+import { useMaterial3ThemeContext } from '../providers/Material3ThemeProvider';
 import { useState } from 'react';
 import { Flex } from './Flex';
 import { IconButton, Switch, Text, TouchableRipple } from 'react-native-paper';
@@ -65,7 +65,7 @@ export function ThemeEditor() {
 
       <Flex gap={20}>
         <Text>Select source color</Text>
-        <Flex gap={20} direction="row" justify="center" wrap='wrap'>
+        <Flex gap={20} direction="row" justify="center" wrap="wrap">
           {colors.map(({ light, dark }) => {
             const color = colorScheme === 'dark' ? dark : light;
             return (

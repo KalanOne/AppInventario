@@ -1,16 +1,22 @@
 import { CreateApiFunctionParams } from '@/types/api';
 import { http } from './api';
-import { TransactionCreate } from '@/types/transacciones';
+import { Transaction, TransactionCreate } from '@/types/transacciones';
 
-export { createTransactions };
+export { createTransactions, getTransaction };
 
 async function createTransactions(
   params: CreateApiFunctionParams<TransactionCreate>
 ) {
-  console.log(params.data);
   return await http<TransactionCreate>({
     method: 'POST',
     path: 'transactions/create',
     data: params.data,
+  });
+}
+
+async function getTransaction(id: number) {
+  return await http<Transaction>({
+    method: 'GET',
+    path: `transactions/${id}`,
   });
 }

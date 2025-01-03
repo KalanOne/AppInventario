@@ -4,7 +4,7 @@ import { Button, Dialog, FAB, Portal, Text } from 'react-native-paper';
 
 import Progress from '@/components/general/Progress';
 import { Material3ThemeProvider } from '@/components/providers/Material3ThemeProvider';
-import { ThemeEditor } from '@/components/ThemeEditor';
+import { ThemeEditor } from '@/components/UI/ThemeEditor';
 import { useProgressStore } from '@/stores/progress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCameraPermissions } from 'expo-camera';
@@ -20,17 +20,21 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry(failureCount, error) {
-        if (error.status === 404) return false;
-        else if (error.status === 401) return false;
-        else if (error.status === 403) return false;
-        else if (failureCount < 2) return true;
-        else return false;
+        if (
+          error.status !== undefined &&
+          [404, 401, 403].includes(error.status)
+        ) {
+          return false;
+        } else if (failureCount < 1) {
+          return true;
+        }
+        return false;
       },
-      // refetchInterval: 600000,
+      refetchInterval: 600000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: 'always',
-      staleTime: 600000,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 0,
+      retryDelay: 0,
     },
   },
 });

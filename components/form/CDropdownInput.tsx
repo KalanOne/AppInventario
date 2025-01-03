@@ -1,7 +1,7 @@
 import { Controller } from 'react-hook-form';
 import { Dropdown } from 'react-native-element-dropdown';
 import { DropdownProps } from 'react-native-element-dropdown/lib/typescript/components/Dropdown/model';
-import { Flex } from '../Flex';
+import { Flex } from '../UI/Flex';
 import { useEffect, useRef, useState } from 'react';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import {
