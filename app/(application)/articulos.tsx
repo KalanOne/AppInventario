@@ -40,9 +40,11 @@ export default function ArticulosScreen() {
   const [barcodeScan, setBarcodeScan] = useState<{
     modal: boolean;
     origin: 'update' | 'create' | 'search' | 'filter' | null;
+    input: 'barcode' | 'serial' | null;
   }>({
     modal: false,
     origin: null,
+    input: null,
   });
 
   const crud = useCrud<ArticulosResponse>();
@@ -208,9 +210,10 @@ export default function ArticulosScreen() {
   }
 
   function handleBarcodeScanClick(
-    origin: 'update' | 'create' | 'search' | 'filter'
+    origin: 'update' | 'create' | 'search' | 'filter',
+    input: 'barcode' | 'serial' | null = null
   ) {
-    setBarcodeScan({ modal: true, origin: origin });
+    setBarcodeScan({ modal: true, origin: origin, input: input });
   }
 
   function handleBarcodeScan(barcode: string) {
@@ -222,7 +225,11 @@ export default function ArticulosScreen() {
       setSearchQuery(barcode);
       crud.setSearch(barcode);
     } else if (barcodeScan.origin === 'filter') {
-      articleFilterForm.setValue('barcode', barcode);
+      if (barcodeScan.input === 'serial') {
+        articleFilterForm.setValue('serialNumber', barcode);
+      } else {
+        articleFilterForm.setValue('barcode', barcode);
+      }
     }
     setBarcodeScan((prev) => ({ ...prev, modal: false }));
   }
@@ -232,6 +239,8 @@ export default function ArticulosScreen() {
       crud.setTotal(articlesQuery.data ? articlesQuery.data[1] : 0);
     }
   }, [articles]);
+
+  
 
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
@@ -334,11 +343,10 @@ export default function ArticulosScreen() {
         <CTextInput
           name="barcode"
           label="Barcode"
-          flexStyles={{ flex: 1 }}
           right={
             <TextInput.Icon
               icon="barcode-scan"
-              onPress={() => handleBarcodeScanClick('filter')}
+              onPress={() => handleBarcodeScanClick('filter', 'barcode')}
               mode="contained"
             />
           }
@@ -350,7 +358,17 @@ export default function ArticulosScreen() {
           keyboardType="numeric"
           type="number"
         />
-        <CTextInput name="serialNumber" label="Serial number" />
+        <CTextInput
+          name="serialNumber"
+          label="Serial number"
+          right={
+            <TextInput.Icon
+              icon="barcode-scan"
+              onPress={() => handleBarcodeScanClick('filter', 'serial')}
+              mode="contained"
+            />
+          }
+        />
       </FilterModal>
       <UpdateModal
         visible={crud.updateModalOpen}
@@ -375,7 +393,7 @@ export default function ArticulosScreen() {
           right={
             <TextInput.Icon
               icon="barcode-scan"
-              onPress={() => handleBarcodeScanClick('update')}
+              onPress={() => handleBarcodeScanClick('update', 'barcode')}
               mode="contained"
             />
           }
@@ -428,7 +446,7 @@ export default function ArticulosScreen() {
           right={
             <TextInput.Icon
               icon="barcode-scan"
-              onPress={() => handleBarcodeScanClick('create')}
+              onPress={() => handleBarcodeScanClick('create', 'barcode')}
               mode="contained"
             />
           }

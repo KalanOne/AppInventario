@@ -38,6 +38,8 @@ function Scanner({ visible, onDismissCancel, onBarcodeScanned }: ScannerProps) {
       );
       setSound(sound);
       await sound.playAsync();
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sound.unloadAsync();
     } catch (error) {
       console.log('Error al reproducir audio', error);
     }

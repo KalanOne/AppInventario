@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -15,28 +15,34 @@ function CollapsableContainer({
   children: ReactNode;
   expanded: boolean;
 }) {
-  const [height, setHeight] = useState(0);
+  const [measuredHeight, setMeasuredHeight] = useState(0);
+  const measuredHeightRef = useRef(0);
   const animatedHeight = useSharedValue(0);
 
   function onLayout(event: LayoutChangeEvent) {
-    const onLayoutHeight = event.nativeEvent.layout.height;
+    const contentHeight = event.nativeEvent.layout.height;
 
-    if (onLayoutHeight > 0 && height !== onLayoutHeight) {
-      setHeight(onLayoutHeight);
+    if (contentHeight > 0 && measuredHeightRef.current !== contentHeight) {
+      measuredHeightRef.current = contentHeight;
+      setMeasuredHeight(contentHeight);
     }
   }
 
-  const collapsableStyle = useAnimatedStyle(() => {
-    animatedHeight.value = expanded ? withTiming(height) : withTiming(0);
+  useEffect(() => {
+    animatedHeight.value = expanded
+      ? withTiming(measuredHeight, { duration: 300 })
+      : withTiming(0, { duration: 300 });
+  }, [expanded, measuredHeight]);
 
-    return {
-      height: animatedHeight.value,
-    };
-  }, [expanded, height]);
+  const collapsableStyle = useAnimatedStyle(() => ({
+    height: animatedHeight.value,
+  }));
 
   return (
-    <Animated.View style={[collapsableStyle, { overflow: 'hidden' }]}>
-      <View style={{ position: 'absolute' }} onLayout={onLayout}>
+    <Animated.View
+      style={[collapsableStyle, { overflow: 'hidden', width: '100%' }]}
+    >
+      <View style={{ position: 'absolute', width: '100%' }} onLayout={onLayout}>
         {children}
       </View>
     </Animated.View>

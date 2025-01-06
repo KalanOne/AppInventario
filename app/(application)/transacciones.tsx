@@ -1,3 +1,4 @@
+import LottieView from 'lottie-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import {
@@ -12,9 +13,10 @@ import {
 } from 'react-native-paper';
 
 import { getTransaction } from '@/api/transacciones.api';
-import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { TransactionsSearch } from '@/components/Searchs/TransactionsSearch';
+import { ListItem } from '@/components/UI/CollapsableListItem';
+import { Flex } from '@/components/UI/Flex';
 import { useProgressQuery } from '@/hooks/progress';
 import { TransactionSearch } from '@/types/searchs';
 import { TransactionDetail } from '@/types/transacciones';
@@ -90,40 +92,72 @@ export default function Transacciones() {
             paddingLeft: 10,
           }}
         >
-          <TextInput
-            value={format({
-              date: transaction.transaction_date,
-              format: 'full',
-              locale: 'es',
-            })}
-            label={'Fecha de la transacción'}
-            mode="outlined"
-            style={{ marginVertical: 3 }}
-          />
-          <TextInput
-            value={format({
-              date: transaction.createdAt,
-              format: 'full',
-              locale: 'es',
-            })}
-            label={'Fecha de creación de la transacción'}
-            mode="outlined"
-            style={{ marginVertical: 3 }}
-          />
-          <TextInput
-            label={'Tipo de transacción'}
-            value={
-              transaction.transaction_type == 'ENTRY' ? 'Entrada' : 'Salida'
-            }
-            mode="outlined"
-            style={{ marginVertical: 3 }}
-          />
-          <TextInput
-            label={'Folio'}
-            value={transaction.folio_number}
-            mode="outlined"
-            style={{ marginVertical: 3 }}
-          />
+          <ListItem
+            title="Transacción"
+            subtitle={`Folio: ${transaction.folio_number}`}
+            icon="receipt"
+          >
+            <Flex flex={1} width={'100%'} padding={10}>
+              <TextInput
+                value={format({
+                  date: transaction.transaction_date,
+                  format: 'full',
+                  locale: 'es',
+                })}
+                label={'Fecha de la transacción'}
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              <TextInput
+                value={format({
+                  date: transaction.createdAt,
+                  format: 'full',
+                  locale: 'es',
+                })}
+                label={'Fecha de creación de la transacción'}
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              <TextInput
+                label={'Tipo de transacción'}
+                value={
+                  transaction.transaction_type == 'ENTRY' ? 'Entrada' : 'Salida'
+                }
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              <TextInput
+                label={'Folio'}
+                value={transaction.folio_number}
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              <TextInput
+                label={
+                  transaction.transaction_type == 'ENTRY'
+                    ? 'Receptor'
+                    : 'Emisor'
+                }
+                value={`${transaction.user.first_name} ${transaction.user.last_name}`}
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              <TextInput
+                label={
+                  transaction.transaction_type == 'EXIT' ? 'Receptor' : 'Emisor'
+                }
+                value={transaction.person_name}
+                mode="outlined"
+                style={{ marginVertical: 3 }}
+              />
+              {/* <LottieView
+                source={require('../../assets/animations/Loading.lottie')}
+                autoPlay
+                loop
+              /> */}
+            </Flex>
+          </ListItem>
+
           <DataTable
             style={{
               flex: 1,

@@ -15,7 +15,7 @@ export const unstable_settings = {
   initialRouteName: 'home',
 };
 
-export default function TabLayout() {
+export default function DrawerLayout() {
   const colors = useAppTheme();
   const addNotification = useNotification((state) => state.addNotification);
   const [[isLoadingJwt, jwt], setJwt] = useStorageState(
@@ -26,28 +26,29 @@ export default function TabLayout() {
   );
   const session = useSessionStore((state) => state.session);
 
-  useEffect(() => {
-    const backAction = () => {
-      addNotification({
-        message:
-          'Ir hacia atras esta deshabilitado. ¿Desea salir de la aplicación?',
-        action: {
-          label: 'Salir',
-          onClick: () => {
-            BackHandler.exitApp();
-          },
-        },
-      });
-      return true;
-    };
+  // Evitar de ir hacia atras
+  // useEffect(() => {
+  //   const backAction = () => {
+  //     addNotification({
+  //       message:
+  //         'Ir hacia atras esta deshabilitado. ¿Desea salir de la aplicación?',
+  //       action: {
+  //         label: 'Salir',
+  //         onClick: () => {
+  //           BackHandler.exitApp();
+  //         },
+  //       },
+  //     });
+  //     return true;
+  //   };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
+  //   const backHandler = BackHandler.addEventListener(
+  //     'hardwareBackPress',
+  //     backAction
+  //   );
 
-    return () => backHandler.remove();
-  }, []);
+  //   return () => backHandler.remove();
+  // }, []);
 
   useEffect(() => {
     if (!session) {
@@ -61,7 +62,7 @@ export default function TabLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         initialRouteName="home"
-        backBehavior="initialRoute"
+        backBehavior="order"
         screenOptions={{
           headerShown: true,
           headerTintColor: colors.colors.primary,
@@ -103,7 +104,6 @@ export default function TabLayout() {
                 color={color}
               />
             ),
-            unmountOnBlur: true,
           }}
         />
         <Drawer.Screen
@@ -128,6 +128,20 @@ export default function TabLayout() {
             drawerIcon: ({ color, focused, size }) => (
               <MaterialCommunityIcons
                 name={focused ? 'bank' : 'bank-outline'}
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="(inventory)"
+          options={{
+            drawerLabel: 'Inventario',
+            title: 'Inventario',
+            drawerIcon: ({ color, focused, size }) => (
+              <TabBarIcon
+                name={focused ? 'storefront' : 'storefront-outline'}
                 color={color}
                 size={size}
               />

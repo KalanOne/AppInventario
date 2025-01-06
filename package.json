@@ -42,6 +42,7 @@
     "expo-status-bar": "~1.12.1",
     "expo-system-ui": "~3.0.7",
     "expo-web-browser": "~13.0.3",
+    "lottie-react-native": "6.7.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.53.0",
@@ -56,7 +57,8 @@
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.10",
     "zod": "^3.24.0-canary.20240701T200529",
-    "zustand": "^4.5.5"
+    "zustand": "^4.5.5",
+    "expo-clipboard": "~6.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
