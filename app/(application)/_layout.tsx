@@ -62,7 +62,7 @@ export default function DrawerLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
         initialRouteName="home"
-        backBehavior="order"
+        backBehavior="history"
         screenOptions={{
           headerShown: true,
           headerTintColor: colors.colors.primary,

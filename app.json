@@ -21,7 +21,11 @@
         "foregroundImage": "./assets/images/adaptive-icon-invent.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.InventarioReactNative"
+      "package": "com.anonymous.InventarioReactNative",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -50,11 +54,18 @@
           "initialOrientation": "PORTRAIT"
         }
       ],
-
       "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6fa56610-16c6-4f32-b75a-d9ce183b96b6"
+      }
     }
   }
 }

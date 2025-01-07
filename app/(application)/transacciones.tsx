@@ -1,6 +1,5 @@
-import LottieView from 'lottie-react-native';
-import { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, KeyboardAvoidingView } from 'react-native';
 import {
   Button,
   Checkbox,
@@ -22,30 +21,38 @@ import { TransactionSearch } from '@/types/searchs';
 import { TransactionDetail } from '@/types/transacciones';
 import { format } from '@formkit/tempo';
 import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function Transacciones() {
   const color = useAppTheme();
   const [trasactionSelected, setTrasactionSelected] = useState<{
     visible: boolean;
-    selected: TransactionSearch | null;
+    selected: TransactionSearch | number | null;
   }>({ visible: false, selected: null });
   const [trasactionDetailSelected, setTrasactionDetailSelected] = useState<{
     visible: boolean;
     selected: TransactionDetail | null;
   }>({ visible: false, selected: null });
-
-  const tranasctionQuery = useQuery({
-    queryKey: ['tranasctionQuery', `${trasactionSelected.selected?.id}`],
+  const { id } = useLocalSearchParams();
+  const transctionQuery = useQuery({
+    queryKey: [
+      'transctionQuery',
+      `${typeof trasactionSelected.selected == 'number' ? trasactionSelected.selected : trasactionSelected.selected?.id}`,
+    ],
     queryFn: async () => {
       if (!trasactionSelected.selected) {
         return null;
       }
-      return getTransaction(trasactionSelected.selected.id);
+      return getTransaction(
+        typeof trasactionSelected.selected == 'number'
+          ? trasactionSelected.selected
+          : trasactionSelected.selected.id
+      );
     },
     enabled: !!trasactionSelected.selected,
   });
-  useProgressQuery(tranasctionQuery, 'tranasctionQuery');
-  const transaction = tranasctionQuery.data;
+  useProgressQuery(transctionQuery, 'transctionQuery');
+  const transaction = transctionQuery.data;
 
   const modalStyles = StyleSheet.create({
     containerStyle: {
@@ -70,6 +77,16 @@ export default function Transacciones() {
     },
   });
 
+  useEffect(() => {
+    if (id) {
+      setTrasactionSelected((prev) => ({
+        ...prev,
+        selected: Number(id),
+        visible: false,
+      }));
+    }
+  }, [id]);
+
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       <Flex align="center" justify="center" padding={10}>
@@ -90,6 +107,7 @@ export default function Transacciones() {
             paddingRight: 10,
             paddingBottom: 0,
             paddingLeft: 10,
+            flexGrow: 1,
           }}
         >
           <ListItem
@@ -97,7 +115,7 @@ export default function Transacciones() {
             subtitle={`Folio: ${transaction.folio_number}`}
             icon="receipt"
           >
-            <Flex flex={1} width={'100%'} padding={10}>
+            <Flex style={{ width: '100%', flexGrow: 1, padding: 10 }}>
               <TextInput
                 value={format({
                   date: transaction.transaction_date,
@@ -150,11 +168,6 @@ export default function Transacciones() {
                 mode="outlined"
                 style={{ marginVertical: 3 }}
               />
-              {/* <LottieView
-                source={require('../../assets/animations/Loading.lottie')}
-                autoPlay
-                loop
-              /> */}
             </Flex>
           </ListItem>
 

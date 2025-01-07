@@ -1,7 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
-import { Button, Icon, Modal, Portal, Text } from 'react-native-paper';
+import {
+  Button,
+  HelperText,
+  Icon,
+  Modal,
+  Portal,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 
 import { getTransactionsSearch } from '@/api/searchs.api';
 import { useProgressQuery } from '@/hooks/progress';
@@ -14,6 +22,7 @@ import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { router, useFocusEffect } from 'expo-router';
 import { useNotification } from '@/stores/notificationStore';
 import { format } from '@formkit/tempo';
+import { Scanner } from '../scanner/Scanner';
 
 export { TransactionsSearch };
 
@@ -33,7 +42,16 @@ function TransactionsSearch({
   const [selectedDrop, setSelectedDrop] = useState<FormattedTransaction | null>(
     null
   );
-  const [firstLoad, setFirstLoad] = useState(true);
+  const firstLoad = useRef(true);
+  const [barcodeScan, setBarcodeScan] = useState<{
+    barcode: string | null;
+    modal: boolean;
+    found: boolean | null;
+  }>({
+    barcode: null,
+    modal: false,
+    found: null,
+  });
   const addNotification = useNotification((state) => state.addNotification);
 
   const styles = StyleSheet.create({
@@ -69,7 +87,7 @@ function TransactionsSearch({
       borderWidth: 0.5,
       borderRadius: 8,
       paddingHorizontal: 8,
-      marginBottom: 20,
+      marginVertical: 20,
     },
     icon: {
       marginRight: 5,
@@ -119,7 +137,7 @@ function TransactionsSearch({
     queryFn: async () => {
       return getTransactionsSearch();
     },
-    refetchInterval: 15 * 60000,
+    refetchInterval: 30 * 60000,
   });
   useProgressQuery(trasactionsSearchQuery, 'trasactionsSearch');
   const transactions = trasactionsSearchQuery.data ?? [];
@@ -151,6 +169,44 @@ function TransactionsSearch({
     handleSearchDismissCancel();
   }
 
+  function handleBarcodeScan(barcode: string) {
+    const transactionsFiltered = transactions.filter((transaction) =>
+      transaction.codes.includes(barcode)
+    );
+    if (transactionsFiltered.length > 0) {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: true,
+      });
+    } else {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: false,
+      });
+    }
+  }
+
+  function handleBarcodeChange(barcode: string) {
+    const transactionsFiltered = transactions.filter((transaction) =>
+      transaction.codes.includes(barcode)
+    );
+    if (transactionsFiltered.length > 0) {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: true,
+      });
+    } else {
+      setBarcodeScan({
+        barcode: barcode,
+        modal: false,
+        found: false,
+      });
+    }
+  }
+
   useEffect(() => {
     if (trasactionsSearchQuery.isError && !trasactionsSearchQuery.isLoading) {
       if (trasactionsSearchQuery.error.status === 401) {
@@ -172,8 +228,8 @@ function TransactionsSearch({
 
   useFocusEffect(
     useCallback(() => {
-      if (firstLoad) {
-        setFirstLoad(false);
+      if (firstLoad.current) {
+        firstLoad.current = false;
         return;
       }
       trasactionsSearchQuery.refetch();
@@ -191,6 +247,34 @@ function TransactionsSearch({
           <Text variant="titleLarge" style={styles.title}>
             Buscar transacciones
           </Text>
+          <TextInput
+            value={barcodeScan.barcode ?? ''}
+            onChangeText={handleBarcodeChange}
+            placeholder="Barcode"
+            right={
+              <TextInput.Icon
+                icon="barcode-scan"
+                onPress={() =>
+                  setBarcodeScan({
+                    barcode: null,
+                    modal: true,
+                    found: null,
+                  })
+                }
+              />
+            }
+          />
+          {barcodeScan.found === false && barcodeScan.barcode && (
+            <HelperText
+              type="info"
+              padding={'none'}
+              style={{
+                color: color.colors.primary,
+              }}
+            >
+              Transactions not found by article barcode
+            </HelperText>
+          )}
           <Dropdown
             style={[
               DropDownStyles.dropdown,
@@ -202,7 +286,15 @@ function TransactionsSearch({
             iconStyle={DropDownStyles.iconStyle}
             containerStyle={DropDownStyles.containerStyle}
             itemTextStyle={DropDownStyles.itemTextStyle}
-            data={formattedArticles}
+            data={
+              barcodeScan.barcode
+                ? formattedArticles.filter((item) =>
+                    barcodeScan.barcode
+                      ? item.codes.includes(barcodeScan.barcode)
+                      : false
+                  )
+                : formattedArticles
+            }
             search
             maxHeight={300}
             labelField="name"
@@ -246,6 +338,19 @@ function TransactionsSearch({
               </Flex>
             )}
           />
+          {barcodeScan.barcode && (
+            <HelperText
+              type="info"
+              padding={'none'}
+              style={{
+                color: color.colors.primary,
+              }}
+            >
+              {barcodeScan.found === true
+                ? 'Transactions found by article barcode'
+                : 'Transactions not found by article barcode'}
+            </HelperText>
+          )}
           <Flex
             direction="row"
             align="center"
@@ -275,6 +380,13 @@ function TransactionsSearch({
           </Flex>
         </Flex>
       </Modal>
+      <Scanner
+        visible={barcodeScan.modal}
+        onDismissCancel={() =>
+          setBarcodeScan((prev) => ({ ...prev, modal: false }))
+        }
+        onBarcodeScanned={handleBarcodeScan}
+      />
     </Portal>
   );
 }

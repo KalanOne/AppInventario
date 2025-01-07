@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import { Button, Icon, Modal, Portal, Text } from 'react-native-paper';
@@ -29,7 +29,7 @@ function ProductsSearch({
   const color = useAppTheme();
   const [isFocus, setIsFocus] = useState(false);
   const [selectedDrop, setSelectedDrop] = useState<Product | null>(null);
-  const [firstLoad, setFirstLoad] = useState(true);
+  const firstLoad = useRef(true);
   const addNotification = useNotification((state) => state.addNotification);
 
   const styles = StyleSheet.create({
@@ -115,7 +115,7 @@ function ProductsSearch({
     queryFn: async () => {
       return await getProductsSearch();
     },
-    refetchInterval: 15 * 60000,
+    refetchInterval: 30 * 60000,
   });
   useProgressQuery(productsSearchQuery, 'productsSearch');
   const products = productsSearchQuery.data ?? [];
@@ -156,8 +156,8 @@ function ProductsSearch({
 
   useFocusEffect(
     useCallback(() => {
-      if (firstLoad) {
-        setFirstLoad(false);
+      if (firstLoad.current) {
+        firstLoad.current = false;
         return;
       }
       productsSearchQuery.refetch();

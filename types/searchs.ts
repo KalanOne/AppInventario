@@ -62,6 +62,7 @@ interface TransactionSearch {
   updatedAt: string;
   user: UserSearch;
   version: number;
+  codes: string[];
 }
 
 interface FormattedTransaction {
@@ -76,6 +77,7 @@ interface FormattedTransaction {
   user: UserSearch;
   version: number;
   name: string;
+  codes: string[];
 }
 
 interface UserSearch {
