@@ -11,6 +11,7 @@ interface Notification {
     label: string;
     onClick: () => void;
   };
+  duration?: number;
 }
 
 interface NotificationState {

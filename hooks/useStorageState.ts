@@ -2,20 +2,20 @@ import { useEffect, useCallback, useReducer } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void];
+type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void, () => void];
 
 export { setStorageItemAsync, useStorageState };
 
 function useAsyncState<T>(
   initialValue: [boolean, T | null] = [true, null]
 ): UseStateHook<T> {
-  return useReducer(
+  return [...useReducer(
     (
       state: [boolean, T | null],
       action: T | null = null
     ): [boolean, T | null] => [false, action],
     initialValue
-  ) as UseStateHook<T>;
+  ), ()=>{}] as UseStateHook<T>;
 }
 
 async function setStorageItemAsync(key: string, value: string | null) {
@@ -68,5 +68,21 @@ function useStorageState(key: string): UseStateHook<string> {
     [key]
   );
 
-  return [state, setValue];
+  const reload = useCallback(() => {
+    if (Platform.OS === "web") {
+      try {
+        if (typeof localStorage !== "undefined") {
+          setState(localStorage.getItem(key));
+        }
+      } catch (e) {
+        console.error("Local storage is unavailable:", e);
+      }
+    } else {
+      SecureStore.getItemAsync(key).then((value) => {
+        setState(value);
+      });
+    }
+  }, [key]);
+
+  return [state, setValue, reload];
 }

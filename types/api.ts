@@ -13,7 +13,7 @@ interface IdApiExtras {
 
 interface GetApiFunctionParams<E = undefined> {
   id?: string | number;
-  params: Record<string, any>;
+  params: URLSearchParams;
   extras: E;
 }
 

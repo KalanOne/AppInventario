@@ -1,45 +1,48 @@
-import { Button, Text } from "react-native-paper";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Button, Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Flex } from "@/components/Flex";
-import { useAppTheme } from "@/components/providers/Material3ThemeProvider";
-import { useEffect } from "react";
-import { useSessionStore } from "@/stores/sessionStore";
-import { useStorageState } from "@/hooks/useStorageState";
-import { router } from "expo-router";
-import { StyleSheet } from "react-native";
+import { Flex } from '@/components/UI/Flex';
+import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
+import { useEffect } from 'react';
+import { useSessionStore } from '@/stores/sessionStore';
+import { useStorageState } from '@/hooks/useStorageState';
+import { router } from 'expo-router';
+import { StyleSheet } from 'react-native';
 
 export default function Index() {
   const insets = useSafeAreaInsets();
   const color = useAppTheme();
 
-  const [[isLoadingJwt, jwt], _setJwt] = useStorageState(
-    process.env.EXPO_PUBLIC_TOKEN_SECRET ?? "TOKEN_SECRET"
+  const [[isLoadingJwt, jwt], _setJwt, reloadJWT] = useStorageState(
+    process.env.EXPO_PUBLIC_TOKEN_SECRET ?? 'TOKEN_SECRET'
   );
   const [[isLoadingEmail, email], _setEmail] = useStorageState(
-    process.env.EXPO_PUBLIC_EMAIL_SECRET ?? "EMAIL_SECRET"
+    process.env.EXPO_PUBLIC_EMAIL_SECRET ?? 'EMAIL_SECRET'
   );
 
   const signIn = useSessionStore((state) => state.signIn);
   const signOut = useSessionStore((state) => state.signOut);
+  const session = useSessionStore((state) => state.session);
 
   function handleContinue() {
     if (jwt && email) {
-      router.push({ pathname: "/(tabs)home" });
+      router.navigate({ pathname: '/home' });
     } else {
-      router.push({ pathname: "/login" });
+      router.push({ pathname: '/login' });
     }
   }
 
   useEffect(() => {
-    if (isLoadingJwt === false && isLoadingEmail === false) {
-      if (jwt && email) {
-        signIn(email, jwt);
-      } else {
-        signOut();
-      }
+    if (jwt && email) {
+      signIn(email, jwt);
+    } else if (!jwt && !email) {
+      signOut();
     }
-  }, [isLoadingJwt, isLoadingEmail]);
+  }, [jwt, email]);
+
+  useEffect(() => {
+    reloadJWT();
+  }, [session]);
 
   return (
     <Flex
@@ -47,15 +50,20 @@ export default function Index() {
       backgroundColor={color.colors.primaryContainer}
       style={{
         paddingTop: insets.top,
-        justifyContent: "center",
-        alignItems: "center",
+        justifyContent: 'center',
+        alignItems: 'center',
       }}
     >
       <Text variant="titleLarge" style={styles.title}>
         Bienvenido de nuevo a Inventario, la aplicación de inventario de la
         empresa.
       </Text>
-      <Button mode="contained" onPress={handleContinue} icon={"home-variant"}>
+      <Button
+        mode="contained"
+        onPress={handleContinue}
+        icon={'home-variant'}
+        disabled={isLoadingJwt || isLoadingEmail}
+      >
         Empezar
       </Button>
     </Flex>
@@ -64,8 +72,8 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   title: {
-    textAlign: "center",
+    textAlign: 'center',
     marginBottom: 50,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
 });

@@ -1,26 +1,28 @@
-import { useState } from "react";
+import { AxiosError } from 'axios';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Keyboard } from 'react-native';
 
-import {
-  MutateOptions,
-  MutationFunction,
-  UseQueryResult,
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { AxiosError } from "axios";
-
+import { Notification, useNotification } from '@/stores/notificationStore';
 import {
   CreateApiFunctionParams,
   DeleteApiFunctionParams,
   GetApiFunctionParams,
   PostApiFunctionParams,
   UpdateApiFunctionParams,
-} from "@/types/api";
-import { MessageResponse } from "@/types/response";
-import { useProgressQuery, useProgressMutation } from "./progress";
-import { Notification, useNotification } from "@/stores/notificationStore";
+} from '@/types/api';
+import { MessageResponse } from '@/types/response';
+import {
+  keepPreviousData,
+  MutateOptions,
+  MutationFunction,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+} from '@tanstack/react-query';
+
+import { useProgressMutation, useProgressQuery } from './progress';
 
 export {
   useCrud,
@@ -38,14 +40,32 @@ interface MutationParams {
   id?: number;
 }
 
+declare module '@tanstack/react-query' {
+  interface Register {
+    defaultError: AxiosError;
+  }
+}
+
 function useCrud<T>() {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [filters, setFilters] = useState(new URLSearchParams());
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [updateModalOpen, setUpdateModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [current, setCurrent] = useState<T>();
+  const [total, setTotal] = useState(0);
+  const [numberOfItemsPerPageList, setNumberOfItemsPerPageList] = useState([
+    5, 10, 15, 25, 50,
+  ]);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const from = page * itemsPerPage;
+  const to = Math.min((page + 1) * itemsPerPage, total);
+  const numberOfPages = Math.ceil(total / itemsPerPage);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, filters, itemsPerPage]);
 
   return {
     page,
@@ -62,6 +82,15 @@ function useCrud<T>() {
     setFilterModalOpen,
     current,
     setCurrent,
+    itemsPerPage,
+    setItemsPerPage,
+    total,
+    setTotal,
+    from,
+    to,
+    numberOfItemsPerPageList,
+    setNumberOfItemsPerPageList,
+    numberOfPages,
   };
 }
 
@@ -69,6 +98,7 @@ interface UseCrudQueryParams<E, T> {
   apiFunction: (params: GetApiFunctionParams<E>) => T;
   name: string;
   page: number;
+  limit: number;
   search: string;
   filters: URLSearchParams;
   keepPrevious: boolean;
@@ -79,27 +109,47 @@ function useCrudQuery<E, T>({
   apiFunction,
   name,
   page,
+  limit,
   search,
   filters,
   keepPrevious,
   extras,
 }: UseCrudQueryParams<E, T>) {
-  const query = useQuery({
+  const query = useQuery<T, AxiosError, T>({
     placeholderData: keepPrevious ? keepPreviousData : undefined,
-    queryKey: [name, page, search, filters.toString(), extras],
+    queryKey: [name, page, limit, search, filters.toString(), extras],
     queryFn: () => {
+      const params = new URLSearchParams(filters);
+      params.append('skip', (page * limit).toString());
+      params.append('limit', limit.toString());
+      params.append('search', search);
+
       return apiFunction({
-        params: {
-          page: page,
-          search: search !== "" ? search : undefined,
-          ...Object.fromEntries(filters),
-        },
+        params: params,
         extras: extras,
       });
     },
   });
-
   useProgressQuery(query, name);
+  const addNotification = useNotification((state) => state.addNotification);
+
+  useEffect(() => {
+    if (query.isError && !query.isLoading) {
+      if (query.error.status === 401) {
+        addNotification({
+          message: 'Session expired',
+          code: '401',
+        });
+        router.push('/logout');
+      } else {
+        addNotification({
+          message: query.error.message,
+          code: query.error.status ? query.error.status.toString() : 'NA',
+        });
+      }
+    }
+  }, [query.isError]);
+
   return query as UseQueryResult<Awaited<T>>;
 }
 
@@ -118,34 +168,34 @@ interface UseCrudDeleteMutationOptions<MessageResponse> {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-interface UseCrudMutationOptionsF<ResponseType, MessageResponse> {
+interface UseCrudMutationOptionsF<ResponseType = any> {
   successNotification?: Notification;
   errorNotification?: Notification;
-  onSuccess?: (response: ResponseType | MessageResponse) => void;
+  onSuccess?: (response: ResponseType) => void;
   onError?: (error: AxiosError) => void;
   customName?: string;
 }
 
-type ApiFunctionType<KindType, SchemaType, E> = KindType extends "create"
+type ApiFunctionType<KindType, SchemaType, E> = KindType extends 'create'
   ? CreateApiFunctionParams<SchemaType, E>
-  : KindType extends "update"
-  ? UpdateApiFunctionParams<SchemaType, E>
-  : KindType extends "delete"
-  ? DeleteApiFunctionParams<E>
-  : PostApiFunctionParams<SchemaType, E>;
+  : KindType extends 'update'
+    ? UpdateApiFunctionParams<SchemaType, E>
+    : KindType extends 'delete'
+      ? DeleteApiFunctionParams<E>
+      : PostApiFunctionParams<SchemaType, E>;
 
 function useCrudMutationF<
-  KindType extends "create" | "update" | "delete" | "custom",
+  KindType extends 'create' | 'update' | 'delete' | 'custom',
   ResponseType,
   SchemaType,
-  E
+  E,
 >(
   apiFunction: (
     params: ApiFunctionType<KindType, SchemaType, E>
   ) => Promise<ResponseType>,
   name: string,
   kind: KindType,
-  options?: UseCrudMutationOptionsF<ResponseType, MessageResponse>
+  options?: UseCrudMutationOptionsF<ResponseType>
 ) {
   const queryClient = useQueryClient();
   const addNotification = useNotification((state) => state.addNotification);
@@ -159,13 +209,13 @@ function useCrudMutationF<
       ResponseType,
       ApiFunctionType<KindType, SchemaType, E>
     >,
-    onSuccess: async (response: ResponseType | MessageResponse) => {
+    onSuccess: async (response: ResponseType) => {
       if (options?.successNotification) {
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -175,19 +225,22 @@ function useCrudMutationF<
     },
     onError: (error: AxiosError) => {
       const errorData: any = error.response?.data;
-      if (errorData.error.message) {
+      if (errorData?.message) {
         addNotification({
-          message: errorData.error.message,
-          code: errorData.error.code,
+          message: errorData.message,
+          code: error.status ? error.status.toString() : 'NA',
         });
+        if (options?.onError) {
+          options.onError(error);
+        }
         return;
       }
       if (options?.errorNotification) {
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error - ' + error.status,
+          code: '',
         });
       }
       if (options?.onError) {
@@ -205,6 +258,7 @@ function useCrudMutationF<
       unknown
     >
   ) {
+    Keyboard.dismiss();
     if (!crudCreateMutationF.isPending) {
       crudCreateMutationF.mutate(variables, options);
     }
@@ -234,8 +288,8 @@ function useCrudCreateMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -256,8 +310,8 @@ function useCrudCreateMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -290,8 +344,8 @@ function useCrudUpdateMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -312,8 +366,8 @@ function useCrudUpdateMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -346,8 +400,8 @@ function useCrudDeleteMutation<T = number | string>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -368,8 +422,8 @@ function useCrudDeleteMutation<T = number | string>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
@@ -403,8 +457,8 @@ function useCrudCustomMutation<SchemaType, ResponseType>(
         addNotification(options.successNotification);
       } else {
         addNotification({
-          message: "Operación exitosa",
-          code: "",
+          message: 'Operación exitosa',
+          code: '',
         });
       }
       await queryClient.invalidateQueries({ queryKey: [name] });
@@ -425,8 +479,8 @@ function useCrudCustomMutation<SchemaType, ResponseType>(
         addNotification(options.errorNotification);
       } else {
         addNotification({
-          message: "Error",
-          code: "",
+          message: 'Error',
+          code: '',
         });
       }
       if (options?.onError) {
