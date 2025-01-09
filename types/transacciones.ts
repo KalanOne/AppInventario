@@ -22,6 +22,7 @@ interface Unit {
   barcode: string;
   multiple: string;
   factor: number;
+  almacen: string | undefined;
   quantity: number;
   afectation: boolean;
   productId?: number | undefined;
@@ -73,6 +74,7 @@ interface Article {
   barcode: string;
   multiple: string;
   factor: number;
+  almacen: string | null;
   createdAt: string;
   updatedAt: string;
   version: number;

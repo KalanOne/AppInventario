@@ -34,6 +34,7 @@ interface Article {
   barcode: string;
   multiple: string;
   factor: number;
+  almacen: string | null;
   createdAt: string;
   updatedAt: string;
   version: number;

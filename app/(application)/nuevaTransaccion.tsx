@@ -592,6 +592,7 @@ export default function NuevaTransaccionScreen() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
 
         <Divider style={{ marginVertical: 5 }} bold />
         <Text>Unidad</Text>
@@ -695,6 +696,7 @@ export default function NuevaTransaccionScreen() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
 
         <Divider style={{ marginVertical: 5 }} bold />
         <Text>Unidad</Text>
@@ -812,6 +814,7 @@ const transactionUnitSchema = z
       .refine((val) => val !== '', {
         message: 'Factor cannot be empty',
       }),
+    almacen: z.string().optional(),
 
     serial: z.string().optional(),
     quantity: z
@@ -874,6 +877,7 @@ const transactionUnitDefaultValues: TransactionUnitInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  almacen: '',
   serial: '',
   quantity: '',
   afectation: true,

@@ -10,6 +10,7 @@ import { useStorageState } from '@/hooks/useStorageState';
 import { useNotification } from '@/stores/notificationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 export const unstable_settings = {
   initialRouteName: 'home',
@@ -75,7 +76,6 @@ export default function DrawerLayout() {
           },
           drawerInactiveTintColor: colors.colors.secondary,
           drawerActiveTintColor: colors.colors.primary,
-          // unmountOnBlur: true,
         }}
       >
         <Drawer.Screen
@@ -88,6 +88,28 @@ export default function DrawerLayout() {
                 name={focused ? 'home' : 'home-outline'}
                 color={color}
                 size={size}
+              />
+            ),
+            drawerItemStyle: {
+              display: 'none',
+            },
+          }}
+        />
+        <Drawer.Screen
+          name="user"
+          options={{
+            drawerLabel: 'User',
+            title: 'User',
+            drawerIcon: ({ color, focused, size }) => (
+              // <FontAwesome5
+              //   name={focused ? 'user-alt' : 'user'}
+              //   size={size*0.8}
+              //   color={color}
+              // />
+              <FontAwesome
+                name={focused ? 'user-circle' : 'user-circle-o'}
+                size={size}
+                color={color}
               />
             ),
           }}

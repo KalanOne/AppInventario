@@ -251,6 +251,7 @@ export default function ProductList() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
         <CTextInput
           name="serialNumber"
           label="Serial number"
@@ -306,6 +307,7 @@ const productFilterSchema = z.object({
   barcode: z.string().optional(),
   multiple: z.string().optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
+  almacen: z.string().optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -320,5 +322,6 @@ const productFilterDefaultValues: ProductFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  almacen: '',
   serialNumber: '',
 };

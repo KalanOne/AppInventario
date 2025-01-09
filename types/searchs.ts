@@ -32,6 +32,7 @@ interface Article {
   createdAt: string;
   deletedDate: any;
   factor: number;
+  almacen: string | null;
   multiple: string;
   product: Product;
   updatedAt: string;
@@ -45,6 +46,7 @@ interface FormattedArticle {
   createdAt: string;
   deletedDate: any;
   factor: number;
+  almacen: string | null;
   multiple: string;
   product: Product;
   updatedAt: string;

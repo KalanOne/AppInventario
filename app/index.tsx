@@ -31,8 +31,6 @@ export default function Index() {
       router.push({ pathname: '/login' });
     }
   }
-  const api = process.env.EXPO_PUBLIC_API_URL;
-  const api2 = process.env.API_URL;
 
   useEffect(() => {
     if (jwt && email) {
@@ -58,7 +56,7 @@ export default function Index() {
     >
       <Text variant="titleLarge" style={styles.title}>
         Bienvenido de nuevo a Inventario, la aplicación de inventario de la
-        empresa. {api ?? 'No hay api'} {api2 ?? 'No hay api2'}
+        empresa.
       </Text>
       <Button
         mode="contained"

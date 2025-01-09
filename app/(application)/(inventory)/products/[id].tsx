@@ -106,6 +106,7 @@ export default function ProductInventory() {
               <Text>
                 Multiplo: {article.multiple} - Factor: {article.factor}
               </Text>
+              <Text>Almacen: {article.almacen ?? 'N/A'}</Text>
               <Text>Código de barras: {article.barcode}</Text>
             </Flex>
           ))}

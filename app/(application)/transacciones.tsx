@@ -300,6 +300,14 @@ export default function Transacciones() {
                   style={{ marginVertical: 3 }}
                   mode="outlined"
                 />
+                <TextInput
+                  label="Almacen"
+                  value={
+                    trasactionDetailSelected.selected.article.almacen ?? ''
+                  }
+                  style={{ marginVertical: 3 }}
+                  mode="outlined"
+                />
 
                 <Divider style={{ marginVertical: 5 }} bold />
                 <Text>Unidad</Text>

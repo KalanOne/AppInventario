@@ -119,6 +119,7 @@ export default function ArticulosScreen() {
       barcode: item.barcode,
       multiple: item.multiple,
       factor: item.factor,
+      almacen: item.almacen ?? '',
     });
   }
 
@@ -195,6 +196,7 @@ export default function ArticulosScreen() {
       barcode: data.barcode,
       multiple: data.multiple.toUpperCase(),
       factor: data.factor,
+      almacen: data.almacen ? data.almacen.toUpperCase() : undefined,
     };
     articlesCreateMutation.mutate(
       {
@@ -240,8 +242,6 @@ export default function ArticulosScreen() {
     }
   }, [articles]);
 
-  
-
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       <Flex padding={10} direction="row">
@@ -273,7 +273,11 @@ export default function ArticulosScreen() {
           mode="contained"
         />
       </Flex>
-      <DataTable>
+      <DataTable
+        style={{
+          flex: 1,
+        }}
+      >
         <DataTable.Header>
           <DataTable.Title style={styles.columnName}>
             Product name
@@ -358,6 +362,7 @@ export default function ArticulosScreen() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
         <CTextInput
           name="serialNumber"
           label="Serial number"
@@ -405,6 +410,7 @@ export default function ArticulosScreen() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
       </UpdateModal>
       <CreateModal
         visible={crud.createModalOpen}
@@ -459,6 +465,7 @@ export default function ArticulosScreen() {
           keyboardType="numeric"
           type="number"
         />
+        <CTextInput name="almacen" label="Almacen" />
       </CreateModal>
       <ProductsSearch
         visible={productSearch.modal}
@@ -480,8 +487,7 @@ export default function ArticulosScreen() {
 
 const styles = StyleSheet.create({
   scrollView: {
-    maxHeight: '70%',
-    minHeight: '70%',
+    flex: 1,
   },
   columnName: {
     flex: 3,
@@ -505,6 +511,7 @@ const articleFilterSchema = z.object({
   barcode: z.string().optional(),
   multiple: z.string().optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
+  almacen: z.string().optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -518,6 +525,7 @@ const articleFilterDefaultValues: ArticleFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  almacen: '',
   serialNumber: '',
 };
 
@@ -528,6 +536,7 @@ const articleUpdateSchema = z.object({
   description: z.string().min(1).max(255),
   barcode: z.string().min(1).max(255),
   multiple: z.string().min(1).max(255),
+  almacen: z.string().optional(),
   factor: z.number().min(1).max(255),
 });
 
@@ -542,6 +551,7 @@ const articleUpdateDefaultValues: ArticleUpdateInputType = {
   description: '',
   barcode: '',
   multiple: '',
+  almacen: '',
   factor: 0,
 };
 
@@ -553,6 +563,7 @@ const articleCreateSchema = z.object({
   barcode: z.string().min(1).max(255),
   multiple: z.string().min(1).max(255),
   factor: z.number().min(1),
+  almacen: z.string().optional(),
 });
 
 type ArticleCreateSchemaType = z.infer<typeof articleCreateSchema>;
@@ -567,4 +578,5 @@ const articleCreateDefaultValues: ArticleCreateInputType = {
   barcode: '',
   multiple: '',
   factor: 0,
+  almacen: '',
 };
