@@ -1,11 +1,12 @@
 import { FC } from 'react';
-import { ActivityIndicator, Portal, Text } from 'react-native-paper';
+import { ActivityIndicator, Portal } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { HextoRGBA } from '@/utils/color';
 import LottieView from 'lottie-react-native';
 import { useProgressStore } from '@/stores/progress';
+import { Platform } from 'react-native';
 
 const Progress: FC = () => {
   const insets = useSafeAreaInsets();
@@ -28,17 +29,20 @@ const Progress: FC = () => {
           backgroundColor: backgroundColor,
         }}
       >
-        {/* <ActivityIndicator animating={true} size={'large'} /> */}
-        <LottieView
-          source={require('../../assets/animations/Loading.json')}
-          autoPlay
-          loop
-          style={{
-            width: 100,
-            height: 100,
-            alignSelf: 'center',
-          }}
-        />
+        {Platform.OS === 'web' ? (
+          <ActivityIndicator animating={true} size={'large'} />
+        ) : (
+          <LottieView
+            source={require('../../assets/animations/Loading.json')}
+            autoPlay
+            loop
+            style={{
+              width: 100,
+              height: 100,
+              alignSelf: 'center',
+            }}
+          />
+        )}
         {/* <Text>{JSON.stringify(progresses)}</Text> */}
       </Flex>
     </Portal>

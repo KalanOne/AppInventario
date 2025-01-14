@@ -1,4 +1,5 @@
 import { getProductsList } from '@/api/inventario.api';
+import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
@@ -12,7 +13,7 @@ import { deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import {
@@ -59,6 +60,11 @@ export default function ProductList() {
   >({
     defaultValues: productFilterDefaultValues,
     resolver: zodResolver(productFilterSchema),
+  });
+
+  const [multipleFilter] = useWatch({
+    control: productFilterForm.control,
+    name: ['multiple'],
   });
 
   function handleBarcodeScanClick(
@@ -244,12 +250,26 @@ export default function ProductList() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
         <CTextInput
@@ -305,7 +325,7 @@ const productFilterSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   barcode: z.string().optional(),
-  multiple: z.string().optional(),
+  multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
   almacen: z.string().optional(),
   serialNumber: z.string().optional(),

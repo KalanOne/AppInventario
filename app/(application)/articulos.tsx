@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ScrollView, StyleSheet } from 'react-native';
 import {
   DataTable,
@@ -29,6 +29,8 @@ import { Articulo, ArticuloCreate, ArticulosResponse } from '@/types/articulos';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CSelectInput } from '@/components/form/CSelectInput';
+import { CDropdownInput } from '@/components/form/CDropdownInput';
 
 export default function ArticulosScreen() {
   const color = useAppTheme();
@@ -91,6 +93,11 @@ export default function ArticulosScreen() {
     resolver: zodResolver(articleFilterSchema),
   });
 
+  const [multipleFilter] = useWatch({
+    control: articleFilterForm.control,
+    name: ['multiple'],
+  });
+
   const articleUpdateForm = useForm<
     ArticleUpdateInputType,
     unknown,
@@ -100,6 +107,11 @@ export default function ArticulosScreen() {
     resolver: zodResolver(articleUpdateSchema),
   });
 
+  const [multipleUpdate] = useWatch({
+    control: articleUpdateForm.control,
+    name: ['multiple'],
+  });
+
   const articleCreateForm = useForm<
     ArticleCreateInputType,
     unknown,
@@ -107,6 +119,11 @@ export default function ArticulosScreen() {
   >({
     defaultValues: articleCreateDefaultValues,
     resolver: zodResolver(articleCreateSchema),
+  });
+
+  const [multipleCreate] = useWatch({
+    control: articleCreateForm.control,
+    name: ['multiple'],
   });
 
   function handleRowPress(item: Articulo) {
@@ -355,12 +372,26 @@ export default function ArticulosScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
         <CTextInput
@@ -403,12 +434,26 @@ export default function ArticulosScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
       </UpdateModal>
@@ -457,13 +502,26 @@ export default function ArticulosScreen() {
             />
           }
         />
-
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
       </CreateModal>
@@ -509,7 +567,7 @@ const articleFilterSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   barcode: z.string().optional(),
-  multiple: z.string().optional(),
+  multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
   almacen: z.string().optional(),
   serialNumber: z.string().optional(),
@@ -529,16 +587,33 @@ const articleFilterDefaultValues: ArticleFilterInputType = {
   serialNumber: '',
 };
 
-const articleUpdateSchema = z.object({
-  productId: z.number(),
-  articleId: z.number(),
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
-  barcode: z.string().min(1).max(255),
-  multiple: z.string().min(1).max(255),
-  almacen: z.string().optional(),
-  factor: z.number().min(1).max(255),
-});
+const articleUpdateSchema = z
+  .object({
+    productId: z.number(),
+    articleId: z.number(),
+    name: z.string().min(1).max(255),
+    description: z.string().min(1).max(255),
+    barcode: z.string().min(1).max(255),
+    multiple: z.string().min(1).max(255),
+    almacen: z.string().optional(),
+    factor: z.number().int().min(1).max(255),
+  })
+  .superRefine((data, ctx) => {
+    if (data.multiple === 'UNIDAD' && data.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (data.multiple !== 'UNIDAD' && data.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
+      });
+    }
+  });
 
 type ArticleUpdateSchemaType = z.infer<typeof articleUpdateSchema>;
 
@@ -555,16 +630,33 @@ const articleUpdateDefaultValues: ArticleUpdateInputType = {
   factor: 0,
 };
 
-const articleCreateSchema = z.object({
-  productId: z.union([z.number(), z.literal('')]).optional(),
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
+const articleCreateSchema = z
+  .object({
+    productId: z.union([z.number(), z.literal('')]).optional(),
+    name: z.string().min(1).max(255),
+    description: z.string().min(1).max(255),
 
-  barcode: z.string().min(1).max(255),
-  multiple: z.string().min(1).max(255),
-  factor: z.number().min(1),
-  almacen: z.string().optional(),
-});
+    barcode: z.string().min(1).max(255),
+    multiple: z.string().min(1).max(255),
+    factor: z.number().int().min(1).max(255),
+    almacen: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.multiple === 'UNIDAD' && data.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (data.multiple !== 'UNIDAD' && data.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
+      });
+    }
+  });
 
 type ArticleCreateSchemaType = z.infer<typeof articleCreateSchema>;
 

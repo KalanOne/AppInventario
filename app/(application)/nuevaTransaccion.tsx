@@ -116,6 +116,11 @@ export default function NuevaTransaccionScreen() {
     resolver: zodResolver(transactionUnitSchema),
   });
 
+  const [multipleCreate] = useWatch({
+    control: transactionUnitCreateForm.control,
+    name: ['multiple'],
+  });
+
   const transactionUnitUpdateForm = useForm<
     TransactionUnitInputType,
     unknown,
@@ -123,6 +128,11 @@ export default function NuevaTransaccionScreen() {
   >({
     defaultValues: transactionUnitDefaultValues,
     resolver: zodResolver(transactionUnitSchema),
+  });
+
+  const [multipleUpdate] = useWatch({
+    control: transactionUnitUpdateForm.control,
+    name: ['multiple'],
   });
 
   const [type, units] = useWatch({
@@ -585,12 +595,26 @@ export default function NuevaTransaccionScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleCreate ? '1' : multipleCreate === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
 
@@ -689,12 +713,26 @@ export default function NuevaTransaccionScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+          }
         />
         <CTextInput name="almacen" label="Almacen" />
 
@@ -861,6 +899,20 @@ const transactionUnitSchema = z
         message:
           'Serial must be empty when factor is not 1 and multiple is not "unidad" or factor must be 1 and multiple must be "unidad when serial is not empty',
         path: ['multiple'],
+      });
+    }
+    if (val.multiple === 'UNIDAD' && val.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (val.multiple !== 'UNIDAD' && val.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
       });
     }
   });

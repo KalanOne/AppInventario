@@ -98,7 +98,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="(application)" />
             </Stack>
-            {permission && !permission.granted && (
+            {/* {permission && !permission.granted && (
               <Portal>
                 <Dialog visible={true}>
                   <Dialog.Title>Camera Permission</Dialog.Title>
@@ -120,7 +120,7 @@ export default function RootLayout() {
                   </Dialog.Actions>
                 </Dialog>
               </Portal>
-            )}
+            )} */}
             <Portal>
               <Dialog visible={visible} onDismiss={toggleModal}>
                 <Dialog.Title>Change theme</Dialog.Title>
