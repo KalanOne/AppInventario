@@ -1,10 +1,9 @@
 import { getInventory } from '@/api/inventario.api';
 import { useProgressQuery } from '@/hooks/progress';
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { DataTable, Text } from 'react-native-paper';
-import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
@@ -16,7 +15,6 @@ export default function ProductInventory() {
   const { id } = useLocalSearchParams();
   const productId =
     typeof id === 'string' ? (isNaN(Number(id)) ? null : Number(id)) : null;
-  // Paginacion
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([15, 25, 50, 100]);
   const [itemsPerPage, onItemsPerPageChange] = useState(
@@ -63,8 +61,7 @@ export default function ProductInventory() {
     <Flex flex={1} backgroundColor={color.colors.background}>
       <ListItem
         title={`${inventory.product.name}`}
-        subtitle={`Total: ${inventory.total} - Disponible: ${inventory.totalAvailable} - Total fuera pero contabilizado en total: ${inventory.totalOutsideCountingInventory}`}
-        // icon="arrow-down"
+        subtitle={`(UNIDADES) Total: ${inventory.total} - Disponible: ${inventory.totalAvailable} - Total fuera pero contabilizado en total: ${inventory.totalOutsideCountingInventory}`}
       >
         <Flex flex={1} padding={10}>
           <Text variant="bodyLarge">Detalles de Producto</Text>
@@ -87,7 +84,6 @@ export default function ProductInventory() {
       <ListItem
         title={`Artículos de ${inventory.product.name}`}
         subtitle={`Total de distintos articulos: ${inventory.articles.length}`}
-        // icon="arrow-down"
       >
         <ScrollView style={{ width: '100%', maxHeight: 400, padding: 10 }}>
           <Text variant="bodyLarge">Articulos</Text>
@@ -106,6 +102,7 @@ export default function ProductInventory() {
               <Text>
                 Multiplo: {article.multiple} - Factor: {article.factor}
               </Text>
+              <Text>Almacen: {article.warehouse.name ?? 'N/A'}</Text>
               <Text>Código de barras: {article.barcode}</Text>
             </Flex>
           ))}
@@ -130,9 +127,9 @@ export default function ProductInventory() {
           <DataTable.Title style={styles.columnShort}>
             Tipo de transacción
           </DataTable.Title>
-          <DataTable.Title style={styles.columnMid}>
+          {/* <DataTable.Title style={styles.columnMid}>
             Fecha de captura
-          </DataTable.Title>
+          </DataTable.Title> */}
           <DataTable.Title style={styles.columnMid}>
             Fecha de transacción
           </DataTable.Title>
@@ -142,12 +139,14 @@ export default function ProductInventory() {
             inventory.transactions.slice(from, to).map((item, index) => (
               <DataTable.Row
                 key={index}
-                // onPress={() => {
-                //   setTrasactionDetailSelected({
-                //     visible: true,
-                //     selected: item,
-                //   });
-                // }}
+                onPress={() => {
+                  router.push({
+                    pathname: '/(application)/transacciones',
+                    params: {
+                      id: item.id,
+                    },
+                  });
+                }}
               >
                 <DataTable.Cell style={styles.columnMid}>
                   {item.folio_number}
@@ -155,13 +154,13 @@ export default function ProductInventory() {
                 <DataTable.Cell style={styles.columnShort}>
                   {item.transaction_type == 'ENTRY' ? 'Entrada' : 'Salida'}
                 </DataTable.Cell>
-                <DataTable.Cell style={styles.columnMid}>
+                {/* <DataTable.Cell style={styles.columnMid}>
                   {format({
                     date: item.createdAt,
                     format: 'medium',
                     locale: 'es',
                   })}
-                </DataTable.Cell>
+                </DataTable.Cell> */}
                 <DataTable.Cell style={styles.columnMid}>
                   {format({
                     date: item.transaction_date,

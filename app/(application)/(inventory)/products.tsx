@@ -1,4 +1,5 @@
 import { getProductsList } from '@/api/inventario.api';
+import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
@@ -6,13 +7,14 @@ import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Flex } from '@/components/UI/Flex';
 import { useCrud, useCrudQuery } from '@/hooks/crud';
+import { useDependencies } from '@/hooks/dependencies';
 import { Product as ProductResponse } from '@/types/inventario';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { StyleSheet } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import {
@@ -52,6 +54,8 @@ export default function ProductList() {
   });
   const products = productsListQuery.data ? productsListQuery.data[0] : [];
 
+  const dependencies = useDependencies(['warehouses'], {}, ['warehouses']);
+
   const productFilterForm = useForm<
     ProductFilterInputType,
     unknown,
@@ -59,6 +63,11 @@ export default function ProductList() {
   >({
     defaultValues: productFilterDefaultValues,
     resolver: zodResolver(productFilterSchema),
+  });
+
+  const [multipleFilter] = useWatch({
+    control: productFilterForm.control,
+    name: ['multiple'],
   });
 
   function handleBarcodeScanClick(
@@ -244,12 +253,33 @@ export default function ProductList() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
         <CTextInput
           name="serialNumber"
@@ -304,8 +334,9 @@ const productFilterSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   barcode: z.string().optional(),
-  multiple: z.string().optional(),
+  multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
+  warehouse: z.union([z.number(), z.null(), z.literal('')]).optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -320,5 +351,6 @@ const productFilterDefaultValues: ProductFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  warehouse: '',
   serialNumber: '',
 };

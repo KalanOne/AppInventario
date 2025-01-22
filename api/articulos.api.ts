@@ -23,7 +23,7 @@ async function getArticles(
 }
 
 async function updateArticles(params: UpdateApiFunctionParams<ArticuloUpdate>) {
-  return await http<ArticuloUpdate>({
+  return await http({
     method: 'PATCH',
     path: 'articles',
     data: params.data,
@@ -31,7 +31,7 @@ async function updateArticles(params: UpdateApiFunctionParams<ArticuloUpdate>) {
 }
 
 async function createArticles(params: CreateApiFunctionParams<ArticuloCreate>) {
-  return await http<ArticuloUpdate>({
+  return await http({
     method: 'POST',
     path: 'articles',
     data: params.data,

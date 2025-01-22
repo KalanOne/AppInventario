@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "InventarioReactNative",
-    "slug": "InventarioReactNative",
-    "version": "1.0.0",
+    "name": "Inventario",
+    "slug": "Inventario",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon-invent.png",
     "scheme": "myapp",
@@ -21,7 +21,11 @@
         "foregroundImage": "./assets/images/adaptive-icon-invent.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.InventarioReactNative"
+      "package": "com.anonymous.Inventario",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -50,11 +54,26 @@
           "initialOrientation": "PORTRAIT"
         }
       ],
-
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "717ba4f5-c5b6-4c1f-b666-d3d5fed39bb6"
+      }
     }
   }
 }

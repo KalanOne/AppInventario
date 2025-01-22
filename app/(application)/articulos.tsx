@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ScrollView, StyleSheet } from 'react-native';
 import {
   DataTable,
@@ -25,10 +25,17 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { useCrud, useCrudMutationF, useCrudQuery } from '@/hooks/crud';
-import { Articulo, ArticuloCreate, ArticulosResponse } from '@/types/articulos';
+import {
+  Articulo,
+  ArticuloCreate,
+  ArticulosResponse,
+  ArticuloUpdate,
+} from '@/types/articulos';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CDropdownInput } from '@/components/form/CDropdownInput';
+import { useDependencies } from '@/hooks/dependencies';
 
 export default function ArticulosScreen() {
   const color = useAppTheme();
@@ -59,6 +66,8 @@ export default function ArticulosScreen() {
     extras: undefined,
   });
   const articles = articlesQuery.data ? articlesQuery.data[0] : [];
+
+  const dependencies = useDependencies(['warehouses'], {}, ['warehouses']);
 
   const articlesUpdateMutation = useCrudMutationF(
     updateArticles,
@@ -91,6 +100,11 @@ export default function ArticulosScreen() {
     resolver: zodResolver(articleFilterSchema),
   });
 
+  const [multipleFilter] = useWatch({
+    control: articleFilterForm.control,
+    name: ['multiple'],
+  });
+
   const articleUpdateForm = useForm<
     ArticleUpdateInputType,
     unknown,
@@ -100,6 +114,11 @@ export default function ArticulosScreen() {
     resolver: zodResolver(articleUpdateSchema),
   });
 
+  const [multipleUpdate] = useWatch({
+    control: articleUpdateForm.control,
+    name: ['multiple'],
+  });
+
   const articleCreateForm = useForm<
     ArticleCreateInputType,
     unknown,
@@ -107,6 +126,11 @@ export default function ArticulosScreen() {
   >({
     defaultValues: articleCreateDefaultValues,
     resolver: zodResolver(articleCreateSchema),
+  });
+
+  const [multipleCreate] = useWatch({
+    control: articleCreateForm.control,
+    name: ['multiple'],
   });
 
   function handleRowPress(item: Articulo) {
@@ -119,6 +143,7 @@ export default function ArticulosScreen() {
       barcode: item.barcode,
       multiple: item.multiple,
       factor: item.factor,
+      warehouse: item.warehouse ? item.warehouse.id : '',
     });
   }
 
@@ -154,9 +179,13 @@ export default function ArticulosScreen() {
   }
 
   function handleUpdateApply(data: ArticleUpdateInputType) {
+    const newData: ArticuloUpdate = {
+      ...data,
+      warehouse: data.warehouse ? data.warehouse : 0,
+    };
     articlesUpdateMutation.mutate({
       id: data.articleId,
-      data,
+      data: newData,
       extras: undefined,
     });
   }
@@ -195,6 +224,7 @@ export default function ArticulosScreen() {
       barcode: data.barcode,
       multiple: data.multiple.toUpperCase(),
       factor: data.factor,
+      warehouse: data.warehouse ? data.warehouse : 0,
     };
     articlesCreateMutation.mutate(
       {
@@ -240,8 +270,6 @@ export default function ArticulosScreen() {
     }
   }, [articles]);
 
-  
-
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       <Flex padding={10} direction="row">
@@ -273,7 +301,11 @@ export default function ArticulosScreen() {
           mode="contained"
         />
       </Flex>
-      <DataTable>
+      <DataTable
+        style={{
+          flex: 1,
+        }}
+      >
         <DataTable.Header>
           <DataTable.Title style={styles.columnName}>
             Product name
@@ -351,12 +383,33 @@ export default function ArticulosScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
         <CTextInput
           name="serialNumber"
@@ -398,12 +451,33 @@ export default function ArticulosScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
       </UpdateModal>
       <CreateModal
@@ -451,13 +525,33 @@ export default function ArticulosScreen() {
             />
           }
         />
-
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleCreate ? '1' : multipleCreate === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
       </CreateModal>
       <ProductsSearch
@@ -480,8 +574,7 @@ export default function ArticulosScreen() {
 
 const styles = StyleSheet.create({
   scrollView: {
-    maxHeight: '70%',
-    minHeight: '70%',
+    flex: 1,
   },
   columnName: {
     flex: 3,
@@ -503,8 +596,9 @@ const articleFilterSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   barcode: z.string().optional(),
-  multiple: z.string().optional(),
+  multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
+  warehouse: z.union([z.number(), z.null(), z.literal('')]).optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -518,18 +612,41 @@ const articleFilterDefaultValues: ArticleFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  warehouse: '',
   serialNumber: '',
 };
 
-const articleUpdateSchema = z.object({
-  productId: z.number(),
-  articleId: z.number(),
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
-  barcode: z.string().min(1).max(255),
-  multiple: z.string().min(1).max(255),
-  factor: z.number().min(1).max(255),
-});
+const articleUpdateSchema = z
+  .object({
+    productId: z.number(),
+    articleId: z.number(),
+    name: z.string().min(1).max(255),
+    description: z.string().min(1).max(255),
+    barcode: z.string().min(1).max(255),
+    multiple: z.string().min(1).max(255),
+    warehouse: z
+      .union([z.number().min(1), z.null(), z.literal('')])
+      .refine((data) => (!data ? false : data > 0), {
+        message: 'Warehouse cannot be empty',
+      }),
+    factor: z.number().int().min(1).max(255),
+  })
+  .superRefine((data, ctx) => {
+    if (data.multiple === 'UNIDAD' && data.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (data.multiple !== 'UNIDAD' && data.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
+      });
+    }
+  });
 
 type ArticleUpdateSchemaType = z.infer<typeof articleUpdateSchema>;
 
@@ -542,18 +659,41 @@ const articleUpdateDefaultValues: ArticleUpdateInputType = {
   description: '',
   barcode: '',
   multiple: '',
+  warehouse: '',
   factor: 0,
 };
 
-const articleCreateSchema = z.object({
-  productId: z.union([z.number(), z.literal('')]).optional(),
-  name: z.string().min(1).max(255),
-  description: z.string().min(1).max(255),
+const articleCreateSchema = z
+  .object({
+    productId: z.union([z.number(), z.literal('')]).optional(),
+    name: z.string().min(1).max(255),
+    description: z.string().min(1).max(255),
 
-  barcode: z.string().min(1).max(255),
-  multiple: z.string().min(1).max(255),
-  factor: z.number().min(1),
-});
+    barcode: z.string().min(1).max(255),
+    multiple: z.string().min(1).max(255),
+    factor: z.number().int().min(1).max(255),
+    warehouse: z
+      .union([z.number().min(1), z.null(), z.literal('')])
+      .refine((data) => (!data ? false : data > 0), {
+        message: 'Warehouse cannot be empty',
+      }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.multiple === 'UNIDAD' && data.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (data.multiple !== 'UNIDAD' && data.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
+      });
+    }
+  });
 
 type ArticleCreateSchemaType = z.infer<typeof articleCreateSchema>;
 
@@ -567,4 +707,5 @@ const articleCreateDefaultValues: ArticleCreateInputType = {
   barcode: '',
   multiple: '',
   factor: 0,
+  warehouse: '',
 };

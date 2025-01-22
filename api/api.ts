@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse, ResponseType } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -10,9 +10,9 @@ interface HttpArguments {
   path: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   data?: any;
-  // params?: Record<string, string | undefined>;
   params?: URLSearchParams;
   dataWithFiles?: boolean;
+  responseType?: ResponseType;
 }
 
 const http = async <T>({
@@ -21,6 +21,7 @@ const http = async <T>({
   data = {},
   params = new URLSearchParams(),
   dataWithFiles = false,
+  responseType = 'json',
 }: HttpArguments): Promise<T> => {
   let jwt;
   if (Platform.OS === 'web') {
@@ -61,6 +62,7 @@ const http = async <T>({
         : 'multipart/form-data',
     },
     timeout: 20000,
+    responseType,
   };
 
   let response: AxiosResponse<T, T>;

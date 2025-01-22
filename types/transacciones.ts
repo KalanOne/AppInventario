@@ -6,6 +6,7 @@ export type {
   TransactionDetail,
   Article,
   Product,
+  Almacen,
 };
 
 interface TransactionCreate {
@@ -22,6 +23,7 @@ interface Unit {
   barcode: string;
   multiple: string;
   factor: number;
+  warehouse: number;
   quantity: number;
   afectation: boolean;
   productId?: number | undefined;
@@ -73,6 +75,7 @@ interface Article {
   barcode: string;
   multiple: string;
   factor: number;
+  warehouse: Almacen;
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -84,6 +87,15 @@ interface Product {
   id: number;
   name: string;
   description: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+  deletedDate: string | null;
+}
+
+interface Almacen {
+  id: number;
+  name: string;
   createdAt: string;
   updatedAt: string;
   version: number;

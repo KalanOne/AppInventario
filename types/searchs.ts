@@ -3,6 +3,7 @@ export type {
   Product,
   ArticleSearchResponse,
   Article,
+  Almacen,
   FormattedArticle,
   TransactionSearchResponse,
   TransactionSearch,
@@ -32,6 +33,7 @@ interface Article {
   createdAt: string;
   deletedDate: any;
   factor: number;
+  warehouse: Almacen;
   multiple: string;
   product: Product;
   updatedAt: string;
@@ -45,6 +47,7 @@ interface FormattedArticle {
   createdAt: string;
   deletedDate: any;
   factor: number;
+  warehouse: Almacen;
   multiple: string;
   product: Product;
   updatedAt: string;
@@ -62,6 +65,7 @@ interface TransactionSearch {
   updatedAt: string;
   user: UserSearch;
   version: number;
+  codes: string[];
 }
 
 interface FormattedTransaction {
@@ -76,6 +80,7 @@ interface FormattedTransaction {
   user: UserSearch;
   version: number;
   name: string;
+  codes: string[];
 }
 
 interface UserSearch {
@@ -85,6 +90,15 @@ interface UserSearch {
   first_name: string;
   id: number;
   last_name: string;
+  updatedAt: string;
+  version: number;
+}
+
+interface Almacen {
+  id: number;
+  name: string;
+  createdAt: string;
+  deletedDate: any;
   updatedAt: string;
   version: number;
 }

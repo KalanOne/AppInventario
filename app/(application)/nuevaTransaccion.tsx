@@ -1,3 +1,4 @@
+import * as Print from 'expo-print';
 import { SetStateAction, useCallback, useState } from 'react';
 import {
   FormProvider,
@@ -17,10 +18,13 @@ import {
   TextInput,
 } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
+import { CalendarDate } from 'react-native-paper-dates/lib/typescript/Date/Calendar';
 import { z } from 'zod';
 
-import { createTransactions } from '@/api/transacciones.api';
-import { Flex } from '@/components/UI/Flex';
+import {
+  createTransactions,
+  getTransactionReport,
+} from '@/api/transacciones.api';
 import { CCheckBox } from '@/components/form/CCheckBox';
 import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CreateModal } from '@/components/form/CreateModal';
@@ -30,14 +34,17 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ArticlesSearch } from '@/components/Searchs/ArticlesSearch';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
+import { Flex } from '@/components/UI/Flex';
+import { useCommonMutation } from '@/hooks/commonQuery';
 import { useCrudMutationF } from '@/hooks/crud';
+import { useDependencies } from '@/hooks/dependencies';
 import { useProgressStore } from '@/stores/progress';
-import { Product } from '@/types/searchs';
-import { TransactionCreate } from '@/types/transacciones';
+import { Article, Product } from '@/types/searchs';
+import { Transaction, TransactionCreate } from '@/types/transacciones';
+import { blobToBase64, deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CalendarDate } from 'react-native-paper-dates/lib/typescript/Date/Calendar';
 import { useQueryClient } from '@tanstack/react-query';
-import { deleteEmptyProperties } from '@/utils/other';
+import { useNotification } from '@/stores/notificationStore';
 
 export default function NuevaTransaccionScreen() {
   const color = useAppTheme();
@@ -79,6 +86,11 @@ export default function NuevaTransaccionScreen() {
   });
   const [date, setDate] = useState<CalendarDate>(new Date());
   const [dateVisible, setDateVisible] = useState(false);
+  const [print, setPrint] = useState<{
+    visible: boolean;
+    transaction: Transaction | null;
+  }>({ visible: false, transaction: null });
+  const addNotification = useNotification((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const onDismissSingle = useCallback(() => {
@@ -92,6 +104,8 @@ export default function NuevaTransaccionScreen() {
     },
     [setDateVisible, setDate]
   );
+
+  const dependencies = useDependencies(['warehouses'], {}, ['warehouses']);
 
   const transactionCreateForm = useForm<
     TransactionCreateInputType,
@@ -116,6 +130,11 @@ export default function NuevaTransaccionScreen() {
     resolver: zodResolver(transactionUnitSchema),
   });
 
+  const [multipleCreate] = useWatch({
+    control: transactionUnitCreateForm.control,
+    name: ['multiple'],
+  });
+
   const transactionUnitUpdateForm = useForm<
     TransactionUnitInputType,
     unknown,
@@ -123,6 +142,11 @@ export default function NuevaTransaccionScreen() {
   >({
     defaultValues: transactionUnitDefaultValues,
     resolver: zodResolver(transactionUnitSchema),
+  });
+
+  const [multipleUpdate] = useWatch({
+    control: transactionUnitUpdateForm.control,
+    name: ['multiple'],
   });
 
   const [type, units] = useWatch({
@@ -135,11 +159,16 @@ export default function NuevaTransaccionScreen() {
     '',
     'create',
     {
-      onSuccess: async () => {
+      onSuccess: async (response) => {
         transactionCreateForm.reset(transactionCreateDefaultValues);
         transactionCreateArrayForm.replace([]);
         await queryClient.invalidateQueries({ queryKey: ['articlesSearch'] });
         await queryClient.invalidateQueries({ queryKey: ['productsSearch'] });
+        // setLocalNotification({
+        //   visible: true,
+        //   message: 'Transaction created successfully',
+        // });
+        setPrint({ visible: true, transaction: response });
       },
       onError(error) {
         if (
@@ -155,6 +184,26 @@ export default function NuevaTransaccionScreen() {
           setLocalNotification({
             visible: true,
             message: 'An error occurred while creating the transaction',
+          });
+        }
+      },
+    }
+  );
+
+  const transactionReportMutation = useCommonMutation(
+    getTransactionReport,
+    '',
+    {
+      onSuccess: async (response) => {
+        try {
+          const base64Data = await blobToBase64(response);
+          await Print.printAsync({
+            uri: `data:application/pdf;base64,${base64Data}`,
+          });
+        } catch (e) {
+          addNotification({
+            message: `Error al imprimir el archivo`,
+            code: '',
           });
         }
       },
@@ -255,7 +304,7 @@ export default function NuevaTransaccionScreen() {
     setArticleSearch({ modal: true, origin });
   }
 
-  function handleFoundArticle(article: any) {
+  function handleFoundArticle(article: Article) {
     switch (articleSearch.origin) {
       case 'add':
         transactionUnitCreateForm.setValue('articleId', article.id);
@@ -269,6 +318,7 @@ export default function NuevaTransaccionScreen() {
         );
         transactionUnitCreateForm.setValue('productId', article.product.id);
         transactionUnitCreateForm.setValue('name', article.product.name);
+        transactionUnitCreateForm.setValue('warehouse', article.warehouse.id);
         break;
       case 'update':
         transactionUnitUpdateForm.setValue('articleId', article.id);
@@ -282,6 +332,7 @@ export default function NuevaTransaccionScreen() {
         );
         transactionUnitUpdateForm.setValue('productId', article.product.id);
         transactionUnitUpdateForm.setValue('name', article.product.name);
+        transactionUnitUpdateForm.setValue('warehouse', article.warehouse.id);
         break;
       default:
         break;
@@ -585,12 +636,33 @@ export default function NuevaTransaccionScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleCreate ? '1' : multipleCreate === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
 
         <Divider style={{ marginVertical: 5 }} bold />
@@ -688,12 +760,33 @@ export default function NuevaTransaccionScreen() {
             />
           }
         />
-        <CTextInput name="multiple" label="Multiple" />
+        <CDropdownInput
+          name="multiple"
+          label="Multiple"
+          data={[
+            { key: 'UNIDAD', value: 'UNIDAD' },
+            { key: 'PAQUETE', value: 'PAQUETE' },
+            { key: 'CAJA', value: 'CAJA' },
+            { key: 'OTRO', value: 'OTRO' },
+          ]}
+          labelField={'key'}
+          valueField={'value'}
+        />
         <CTextInput
           name="factor"
           label="Factor"
           keyboardType="numeric"
           type="number"
+          placeholder={
+            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+          }
+        />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
         />
 
         <Divider style={{ marginVertical: 5 }} bold />
@@ -794,6 +887,36 @@ export default function NuevaTransaccionScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+      <Portal>
+        <Dialog
+          visible={print.visible}
+          onDismiss={() => {
+            setPrint((prev) => ({ ...prev, visible: false }));
+          }}
+        >
+          <Dialog.Title>¿Desea imprimir el acuse de transacción?</Dialog.Title>
+          <Dialog.Content>
+            <Text>Se abrirá un archivo PDF con el acuse de transacción</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => {
+                transactionReportMutation.mutate(print.transaction?.id);
+                setPrint((prev) => ({ ...prev, visible: false }));
+              }}
+            >
+              Si
+            </Button>
+            <Button
+              onPress={() => {
+                setPrint((prev) => ({ ...prev, visible: false }));
+              }}
+            >
+              No
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Flex>
   );
 }
@@ -811,6 +934,11 @@ const transactionUnitSchema = z
       .union([z.number().min(1).max(255), z.literal('')])
       .refine((val) => val !== '', {
         message: 'Factor cannot be empty',
+      }),
+    warehouse: z
+      .union([z.number().min(1), z.null(), z.literal('')])
+      .refine((data) => (!data ? false : data > 0), {
+        message: 'Warehouse cannot be empty',
       }),
 
     serial: z.string().optional(),
@@ -860,6 +988,20 @@ const transactionUnitSchema = z
         path: ['multiple'],
       });
     }
+    if (val.multiple === 'UNIDAD' && val.factor !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be 1 for UNIDAD',
+        path: ['factor'],
+      });
+    }
+    if (val.multiple !== 'UNIDAD' && val.factor === 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Factor must be different than 1 for PAQUETE, CAJA, OTRO',
+        path: ['factor'],
+      });
+    }
   });
 
 type TransactionUnitSchemaType = z.infer<typeof transactionUnitSchema>;
@@ -874,6 +1016,7 @@ const transactionUnitDefaultValues: TransactionUnitInputType = {
   barcode: '',
   multiple: '',
   factor: '',
+  warehouse: '',
   serial: '',
   quantity: '',
   afectation: true,

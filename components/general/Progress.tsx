@@ -1,15 +1,19 @@
+import LottieView from 'lottie-react-native';
 import { FC } from 'react';
+import { Platform } from 'react-native';
 import { ActivityIndicator, Portal } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flex } from '../UI/Flex';
-import { useAppTheme } from '../providers/Material3ThemeProvider';
+
 import { HextoRGBA } from '@/utils/color';
-import LottieView from 'lottie-react-native';
+
+import { useAppTheme } from '../providers/Material3ThemeProvider';
+import { Flex } from '../UI/Flex';
 
 const Progress: FC = () => {
   const insets = useSafeAreaInsets();
   const color = useAppTheme();
   const backgroundColor = HextoRGBA(color.colors.background, 0.5);
+
   return (
     <Portal>
       <Flex
@@ -25,17 +29,20 @@ const Progress: FC = () => {
           backgroundColor: backgroundColor,
         }}
       >
-        {/* <ActivityIndicator animating={true} size={'large'} /> */}
-        <LottieView
-          source={require('../../assets/animations/Loading.json')}
-          autoPlay
-          loop
-          style={{
-            width: 100,
-            height: 100,
-            alignSelf: 'center',
-          }}
-        />
+        {Platform.OS === 'web' ? (
+          <ActivityIndicator animating={true} size={'large'} />
+        ) : (
+          <LottieView
+            source={require('../../assets/animations/Loading.json')}
+            autoPlay
+            loop
+            style={{
+              width: 100,
+              height: 100,
+              alignSelf: 'center',
+            }}
+          />
+        )}
       </Flex>
     </Portal>
   );

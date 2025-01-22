@@ -13,6 +13,7 @@ interface Articulo {
   barcode: string;
   multiple: string;
   factor: number;
+  warehouse: Almacen;
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -36,6 +37,7 @@ interface ArticuloUpdate {
   barcode: string;
   multiple: string;
   factor: number;
+  warehouse: number;
   productId: number;
   articleId: number;
 }
@@ -47,4 +49,14 @@ interface ArticuloCreate {
   barcode: string;
   multiple: string;
   factor: number;
+  warehouse: number;
+}
+
+interface Almacen {
+  id: number;
+  name: string;
+  createdAt: string;
+  deletedDate: any;
+  updatedAt: string;
+  version: number;
 }

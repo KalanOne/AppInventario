@@ -1,25 +1,32 @@
-import LottieView from 'lottie-react-native';
-import { useState } from 'react';
+import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import { useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import {
   Button,
   Checkbox,
   DataTable,
   Divider,
+  IconButton,
   Modal,
   Portal,
   Text,
   TextInput,
 } from 'react-native-paper';
 
-import { getTransaction } from '@/api/transacciones.api';
+import { getTransaction, getTransactionReport } from '@/api/transacciones.api';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { TransactionsSearch } from '@/components/Searchs/TransactionsSearch';
 import { ListItem } from '@/components/UI/CollapsableListItem';
 import { Flex } from '@/components/UI/Flex';
+import { useCommonMutation } from '@/hooks/commonQuery';
 import { useProgressQuery } from '@/hooks/progress';
+import { useNotification } from '@/stores/notificationStore';
 import { TransactionSearch } from '@/types/searchs';
 import { TransactionDetail } from '@/types/transacciones';
+import { blobToBase64 } from '@/utils/other';
 import { format } from '@formkit/tempo';
 import { useQuery } from '@tanstack/react-query';
 
@@ -27,25 +34,132 @@ export default function Transacciones() {
   const color = useAppTheme();
   const [trasactionSelected, setTrasactionSelected] = useState<{
     visible: boolean;
-    selected: TransactionSearch | null;
+    selected: TransactionSearch | number | null;
   }>({ visible: false, selected: null });
   const [trasactionDetailSelected, setTrasactionDetailSelected] = useState<{
     visible: boolean;
     selected: TransactionDetail | null;
   }>({ visible: false, selected: null });
+  const addNotification = useNotification((state) => state.addNotification);
+  const [actionPdf, setActionPdf] = useState<'share' | 'print' | 'save'>(
+    'print'
+  );
 
-  const tranasctionQuery = useQuery({
-    queryKey: ['tranasctionQuery', `${trasactionSelected.selected?.id}`],
+  const { id } = useLocalSearchParams();
+
+  const transctionQuery = useQuery({
+    queryKey: [
+      'transctionQuery',
+      `${typeof trasactionSelected.selected == 'number' ? trasactionSelected.selected : trasactionSelected.selected?.id}`,
+    ],
     queryFn: async () => {
       if (!trasactionSelected.selected) {
         return null;
       }
-      return getTransaction(trasactionSelected.selected.id);
+      return getTransaction(
+        typeof trasactionSelected.selected == 'number'
+          ? trasactionSelected.selected
+          : trasactionSelected.selected.id
+      );
     },
     enabled: !!trasactionSelected.selected,
   });
-  useProgressQuery(tranasctionQuery, 'tranasctionQuery');
-  const transaction = tranasctionQuery.data;
+  useProgressQuery(transctionQuery, 'transctionQuery');
+  const transaction = transctionQuery.data;
+
+  const transactionReportMutation = useCommonMutation(
+    getTransactionReport,
+    '',
+    {
+      onSuccess: async (response) => {
+        try {
+          const base64Data = await blobToBase64(response);
+          if (actionPdf === 'print') {
+            await Print.printAsync({
+              uri: `data:application/pdf;base64,${base64Data}`,
+            });
+          } else if (actionPdf === 'share') {
+            const fileUri = `${FileSystem.cacheDirectory}acuse_reporte_${transaction?.folio_number.replace(/[\/\\]/g, '_')}.pdf`;
+            await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            await Sharing.shareAsync(fileUri, {
+              mimeType: 'application/pdf',
+              dialogTitle: 'Compartir acuse',
+              UTI: 'com.adobe.pdf',
+            });
+          } else if (actionPdf === 'save') {
+            const permissions =
+              await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+            if (!permissions.granted) {
+              addNotification({
+                message: 'Permiso denegado para guardar el archivo',
+                code: '',
+              });
+              return;
+            }
+            const uri = await FileSystem.StorageAccessFramework.createFileAsync(
+              permissions.directoryUri,
+              `acuse_reporte_${transaction?.folio_number.replace(/[\/\\]/g, '_')}`,
+              'application/pdf'
+            );
+            await FileSystem.StorageAccessFramework.writeAsStringAsync(
+              uri,
+              base64Data,
+              {
+                encoding: FileSystem.EncodingType.Base64,
+              }
+            );
+            addNotification({
+              message: 'Archivo guardado exitosamente',
+              code: '',
+            });
+          }
+        } catch (e) {
+          addNotification({
+            message: `Error al ${actionPdf == 'print' ? 'imprimir' : actionPdf == 'save' ? 'guardar' : 'compartir'} el archivo`,
+            code: '',
+          });
+        }
+      },
+    }
+  );
+
+  function printReport() {
+    if (transaction) {
+      setActionPdf('print');
+      transactionReportMutation.mutate(transaction.id);
+    } else {
+      addNotification({
+        message: 'No se ha seleccionado ninguna transacción',
+        code: '404',
+      });
+    }
+  }
+
+  function shareReport() {
+    if (transaction) {
+      setActionPdf('share');
+      transactionReportMutation.mutate(transaction.id);
+    } else {
+      addNotification({
+        message: 'No se ha seleccionado ninguna transacción',
+        code: '404',
+      });
+    }
+  }
+
+  function saveReport() {
+    if (transaction) {
+      setActionPdf('save');
+      transactionReportMutation.mutate(transaction.id);
+    } else {
+      addNotification({
+        message: 'No se ha seleccionado ninguna transacción',
+        code: '404',
+      });
+    }
+  }
 
   const modalStyles = StyleSheet.create({
     containerStyle: {
@@ -70,6 +184,16 @@ export default function Transacciones() {
     },
   });
 
+  useEffect(() => {
+    if (id) {
+      setTrasactionSelected((prev) => ({
+        ...prev,
+        selected: Number(id),
+        visible: false,
+      }));
+    }
+  }, [id]);
+
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       <Flex align="center" justify="center" padding={10}>
@@ -90,6 +214,7 @@ export default function Transacciones() {
             paddingRight: 10,
             paddingBottom: 0,
             paddingLeft: 10,
+            flexGrow: 1,
           }}
         >
           <ListItem
@@ -97,7 +222,7 @@ export default function Transacciones() {
             subtitle={`Folio: ${transaction.folio_number}`}
             icon="receipt"
           >
-            <Flex flex={1} width={'100%'} padding={10}>
+            <Flex style={{ width: '100%', flexGrow: 1, padding: 10 }}>
               <TextInput
                 value={format({
                   date: transaction.transaction_date,
@@ -150,13 +275,26 @@ export default function Transacciones() {
                 mode="outlined"
                 style={{ marginVertical: 3 }}
               />
-              {/* <LottieView
-                source={require('../../assets/animations/Loading.lottie')}
-                autoPlay
-                loop
-              /> */}
             </Flex>
           </ListItem>
+
+          <Flex direction="row" justify="flex-end" padding={10}>
+            <IconButton
+              icon={'printer-wireless'}
+              mode="contained"
+              onPress={printReport}
+            />
+            <IconButton
+              icon={'share-variant'}
+              mode="contained"
+              onPress={shareReport}
+            />
+            <IconButton
+              icon={'content-save'}
+              mode="contained"
+              onPress={saveReport}
+            />
+          </Flex>
 
           <DataTable
             style={{
@@ -284,6 +422,14 @@ export default function Transacciones() {
                   label="Factor"
                   keyboardType="numeric"
                   value={`${trasactionDetailSelected.selected.article.factor}`}
+                  style={{ marginVertical: 3 }}
+                  mode="outlined"
+                />
+                <TextInput
+                  label="Almacen"
+                  value={
+                    trasactionDetailSelected.selected.article.warehouse.name
+                  }
                   style={{ marginVertical: 3 }}
                   mode="outlined"
                 />

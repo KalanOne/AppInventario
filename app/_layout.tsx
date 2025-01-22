@@ -1,18 +1,18 @@
+import { useCameraPermissions } from 'expo-camera';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Dialog, FAB, Portal, Text } from 'react-native-paper';
+import { Animated, PanResponder } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Dialog, FAB, Portal } from 'react-native-paper';
+import { es, registerTranslation } from 'react-native-paper-dates';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { NotificationBar } from '@/components/general/NotificationBar';
 import Progress from '@/components/general/Progress';
 import { Material3ThemeProvider } from '@/components/providers/Material3ThemeProvider';
 import { ThemeEditor } from '@/components/UI/ThemeEditor';
 import { useProgressStore } from '@/stores/progress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCameraPermissions } from 'expo-camera';
-import { NotificationBar } from '@/components/general/NotificationBar';
-import { Animated, PanResponder } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { registerTranslation, es } from 'react-native-paper-dates';
 
 registerTranslation('es', es);
 
@@ -39,16 +39,10 @@ const queryClient = new QueryClient({
   },
 });
 
-export const unstable_settings = {
-  // Ensure any route can link back to `/`
-  initialRouteName: 'index',
-};
-
 export default function RootLayout() {
   const [visible, setVisible] = useState(false);
   const progresses = useProgressStore((state) => state.progresses);
   const [permission, requestPermission] = useCameraPermissions();
-  // useLanguage();
   const pan = useRef(new Animated.ValueXY()).current;
 
   function toggleModal() {
@@ -98,7 +92,7 @@ export default function RootLayout() {
               <Stack.Screen name="index" />
               <Stack.Screen name="(application)" />
             </Stack>
-            {permission && !permission.granted && (
+            {/* {permission && !permission.granted && (
               <Portal>
                 <Dialog visible={true}>
                   <Dialog.Title>Camera Permission</Dialog.Title>
@@ -120,7 +114,7 @@ export default function RootLayout() {
                   </Dialog.Actions>
                 </Dialog>
               </Portal>
-            )}
+            )} */}
             <Portal>
               <Dialog visible={visible} onDismiss={toggleModal}>
                 <Dialog.Title>Change theme</Dialog.Title>

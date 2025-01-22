@@ -6,23 +6,24 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { useEffect } from 'react';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useStorageState } from '@/hooks/useStorageState';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
 export default function Index() {
   const insets = useSafeAreaInsets();
   const color = useAppTheme();
 
-  const [[isLoadingJwt, jwt], _setJwt, reloadJWT] = useStorageState(
+  const [[isLoadingJwt, jwt], setJwt, reloadJWT] = useStorageState(
     process.env.EXPO_PUBLIC_TOKEN_SECRET ?? 'TOKEN_SECRET'
   );
-  const [[isLoadingEmail, email], _setEmail] = useStorageState(
+  const [[isLoadingEmail, email], setEmail] = useStorageState(
     process.env.EXPO_PUBLIC_EMAIL_SECRET ?? 'EMAIL_SECRET'
   );
 
   const signIn = useSessionStore((state) => state.signIn);
   const signOut = useSessionStore((state) => state.signOut);
   const session = useSessionStore((state) => state.session);
+  const actualPathName = usePathname();
 
   function handleContinue() {
     if (jwt && email) {
@@ -33,12 +34,18 @@ export default function Index() {
   }
 
   useEffect(() => {
-    if (jwt && email) {
-      signIn(email, jwt);
-    } else if (!jwt && !email) {
-      signOut();
+    if (!isLoadingJwt && !isLoadingEmail) {
+      if (jwt && email) {
+        signIn(email, jwt);
+      } else if (!jwt && !email) {
+        signOut({
+          setJwt: setJwt,
+          setEmail: setEmail,
+          actualPathName: actualPathName,
+        });
+      }
     }
-  }, [jwt, email]);
+  }, [jwt, email, isLoadingJwt, isLoadingEmail]);
 
   useEffect(() => {
     reloadJWT();

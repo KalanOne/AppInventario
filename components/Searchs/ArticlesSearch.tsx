@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { StyleSheet } from 'react-native';
 import { getArticlesSearch } from '@/api/searchs.api';
@@ -48,7 +48,7 @@ function ArticlesSearch({
     modal: false,
     found: null,
   });
-  const [firstLoad, setFirstLoad] = useState(true);
+  const firstLoad = useRef(true);
   const addNotification = useNotification((state) => state.addNotification);
 
   const styles = StyleSheet.create({
@@ -134,7 +134,7 @@ function ArticlesSearch({
     queryFn: async () => {
       return await getArticlesSearch();
     },
-    refetchInterval: 15 * 60000,
+    refetchInterval: 30 * 60000,
   });
   useProgressQuery(articlesSearchQuery, 'articlesSearch');
   const articles = articlesSearchQuery.data ?? [];
@@ -236,8 +236,8 @@ function ArticlesSearch({
 
   useFocusEffect(
     useCallback(() => {
-      if (firstLoad) {
-        setFirstLoad(false);
+      if (firstLoad.current) {
+        firstLoad.current = false;
         return;
       }
       articlesSearchQuery.refetch();
