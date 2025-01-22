@@ -25,12 +25,17 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { useCrud, useCrudMutationF, useCrudQuery } from '@/hooks/crud';
-import { Articulo, ArticuloCreate, ArticulosResponse } from '@/types/articulos';
+import {
+  Articulo,
+  ArticuloCreate,
+  ArticulosResponse,
+  ArticuloUpdate,
+} from '@/types/articulos';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CSelectInput } from '@/components/form/CSelectInput';
 import { CDropdownInput } from '@/components/form/CDropdownInput';
+import { useDependencies } from '@/hooks/dependencies';
 
 export default function ArticulosScreen() {
   const color = useAppTheme();
@@ -61,6 +66,8 @@ export default function ArticulosScreen() {
     extras: undefined,
   });
   const articles = articlesQuery.data ? articlesQuery.data[0] : [];
+
+  const dependencies = useDependencies(['warehouses'], {}, ['warehouses']);
 
   const articlesUpdateMutation = useCrudMutationF(
     updateArticles,
@@ -136,7 +143,7 @@ export default function ArticulosScreen() {
       barcode: item.barcode,
       multiple: item.multiple,
       factor: item.factor,
-      almacen: item.almacen ?? '',
+      warehouse: item.warehouse ? item.warehouse.id : '',
     });
   }
 
@@ -172,9 +179,13 @@ export default function ArticulosScreen() {
   }
 
   function handleUpdateApply(data: ArticleUpdateInputType) {
+    const newData: ArticuloUpdate = {
+      ...data,
+      warehouse: data.warehouse ? data.warehouse : 0,
+    };
     articlesUpdateMutation.mutate({
       id: data.articleId,
-      data,
+      data: newData,
       extras: undefined,
     });
   }
@@ -213,7 +224,7 @@ export default function ArticulosScreen() {
       barcode: data.barcode,
       multiple: data.multiple.toUpperCase(),
       factor: data.factor,
-      almacen: data.almacen ? data.almacen.toUpperCase() : undefined,
+      warehouse: data.warehouse ? data.warehouse : 0,
     };
     articlesCreateMutation.mutate(
       {
@@ -393,7 +404,13 @@ export default function ArticulosScreen() {
             !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
           }
         />
-        <CTextInput name="almacen" label="Almacen" />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
+        />
         <CTextInput
           name="serialNumber"
           label="Serial number"
@@ -455,7 +472,13 @@ export default function ArticulosScreen() {
             !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
           }
         />
-        <CTextInput name="almacen" label="Almacen" />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
+        />
       </UpdateModal>
       <CreateModal
         visible={crud.createModalOpen}
@@ -520,10 +543,16 @@ export default function ArticulosScreen() {
           keyboardType="numeric"
           type="number"
           placeholder={
-            !multipleUpdate ? '1' : multipleUpdate === 'UNIDAD' ? '1' : '12'
+            !multipleCreate ? '1' : multipleCreate === 'UNIDAD' ? '1' : '12'
           }
         />
-        <CTextInput name="almacen" label="Almacen" />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
+        />
       </CreateModal>
       <ProductsSearch
         visible={productSearch.modal}
@@ -569,7 +598,7 @@ const articleFilterSchema = z.object({
   barcode: z.string().optional(),
   multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
-  almacen: z.string().optional(),
+  warehouse: z.union([z.number(), z.null(), z.literal('')]).optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -583,7 +612,7 @@ const articleFilterDefaultValues: ArticleFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
-  almacen: '',
+  warehouse: '',
   serialNumber: '',
 };
 
@@ -595,7 +624,11 @@ const articleUpdateSchema = z
     description: z.string().min(1).max(255),
     barcode: z.string().min(1).max(255),
     multiple: z.string().min(1).max(255),
-    almacen: z.string().optional(),
+    warehouse: z
+      .union([z.number().min(1), z.null(), z.literal('')])
+      .refine((data) => (!data ? false : data > 0), {
+        message: 'Warehouse cannot be empty',
+      }),
     factor: z.number().int().min(1).max(255),
   })
   .superRefine((data, ctx) => {
@@ -626,7 +659,7 @@ const articleUpdateDefaultValues: ArticleUpdateInputType = {
   description: '',
   barcode: '',
   multiple: '',
-  almacen: '',
+  warehouse: '',
   factor: 0,
 };
 
@@ -639,7 +672,11 @@ const articleCreateSchema = z
     barcode: z.string().min(1).max(255),
     multiple: z.string().min(1).max(255),
     factor: z.number().int().min(1).max(255),
-    almacen: z.string().optional(),
+    warehouse: z
+      .union([z.number().min(1), z.null(), z.literal('')])
+      .refine((data) => (!data ? false : data > 0), {
+        message: 'Warehouse cannot be empty',
+      }),
   })
   .superRefine((data, ctx) => {
     if (data.multiple === 'UNIDAD' && data.factor !== 1) {
@@ -670,5 +707,5 @@ const articleCreateDefaultValues: ArticleCreateInputType = {
   barcode: '',
   multiple: '',
   factor: 0,
-  almacen: '',
+  warehouse: '',
 };

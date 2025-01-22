@@ -1,12 +1,13 @@
-import { HelperText } from 'react-native-paper';
-import { Controller } from 'react-hook-form';
-import { Flex } from '../UI/Flex';
 import { useEffect, useState } from 'react';
+import { Controller } from 'react-hook-form';
 import {
   MultipleSelectList,
   SelectList,
 } from 'react-native-dropdown-select-list';
+import { HelperText } from 'react-native-paper';
+
 import { useAppTheme } from '../providers/Material3ThemeProvider';
+import { Flex } from '../UI/Flex';
 
 type CSelectInputProps<T> = {
   name: string;

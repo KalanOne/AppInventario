@@ -1,18 +1,18 @@
+import LottieView from 'lottie-react-native';
 import { FC } from 'react';
+import { Platform } from 'react-native';
 import { ActivityIndicator, Portal } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Flex } from '../UI/Flex';
-import { useAppTheme } from '../providers/Material3ThemeProvider';
+
 import { HextoRGBA } from '@/utils/color';
-import LottieView from 'lottie-react-native';
-import { useProgressStore } from '@/stores/progress';
-import { Platform } from 'react-native';
+
+import { useAppTheme } from '../providers/Material3ThemeProvider';
+import { Flex } from '../UI/Flex';
 
 const Progress: FC = () => {
   const insets = useSafeAreaInsets();
   const color = useAppTheme();
   const backgroundColor = HextoRGBA(color.colors.background, 0.5);
-  const progresses = useProgressStore((state) => state.progresses);
 
   return (
     <Portal>
@@ -43,7 +43,6 @@ const Progress: FC = () => {
             }}
           />
         )}
-        {/* <Text>{JSON.stringify(progresses)}</Text> */}
       </Flex>
     </Portal>
   );

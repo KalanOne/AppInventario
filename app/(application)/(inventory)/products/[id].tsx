@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { DataTable, Text } from 'react-native-paper';
-import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
@@ -16,7 +15,6 @@ export default function ProductInventory() {
   const { id } = useLocalSearchParams();
   const productId =
     typeof id === 'string' ? (isNaN(Number(id)) ? null : Number(id)) : null;
-  // Paginacion
   const [page, setPage] = useState<number>(0);
   const [numberOfItemsPerPageList] = useState([15, 25, 50, 100]);
   const [itemsPerPage, onItemsPerPageChange] = useState(
@@ -64,7 +62,6 @@ export default function ProductInventory() {
       <ListItem
         title={`${inventory.product.name}`}
         subtitle={`(UNIDADES) Total: ${inventory.total} - Disponible: ${inventory.totalAvailable} - Total fuera pero contabilizado en total: ${inventory.totalOutsideCountingInventory}`}
-        // icon="arrow-down"
       >
         <Flex flex={1} padding={10}>
           <Text variant="bodyLarge">Detalles de Producto</Text>
@@ -87,7 +84,6 @@ export default function ProductInventory() {
       <ListItem
         title={`Artículos de ${inventory.product.name}`}
         subtitle={`Total de distintos articulos: ${inventory.articles.length}`}
-        // icon="arrow-down"
       >
         <ScrollView style={{ width: '100%', maxHeight: 400, padding: 10 }}>
           <Text variant="bodyLarge">Articulos</Text>
@@ -106,7 +102,7 @@ export default function ProductInventory() {
               <Text>
                 Multiplo: {article.multiple} - Factor: {article.factor}
               </Text>
-              <Text>Almacen: {article.almacen ?? 'N/A'}</Text>
+              <Text>Almacen: {article.warehouse.name ?? 'N/A'}</Text>
               <Text>Código de barras: {article.barcode}</Text>
             </Flex>
           ))}

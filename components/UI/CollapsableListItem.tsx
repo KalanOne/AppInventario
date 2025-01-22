@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 0.2,
   },
-  container: { flexDirection: 'row', padding: 10 },
+  container: { flexDirection: 'row', padding: 10, cursor: 'pointer' },
   image: { width: 50, height: 50, borderRadius: 5, marginRight: 10 },
   textContainer: { justifyContent: 'space-around' },
   details: { margin: 10 },

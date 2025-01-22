@@ -1,3 +1,4 @@
+import { Audio } from 'expo-av';
 import { BarcodeScanningResult, CameraView } from 'expo-camera';
 import { useEffect, useState } from 'react';
 import { Keyboard, StyleSheet } from 'react-native';
@@ -9,10 +10,9 @@ import {
   Text,
   TextInput,
 } from 'react-native-paper';
-import { Audio } from 'expo-av';
 
-import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
+import { Flex } from '@/components/UI/Flex';
 
 export { Scanner };
 
@@ -41,7 +41,7 @@ function Scanner({ visible, onDismissCancel, onBarcodeScanned }: ScannerProps) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await sound.unloadAsync();
     } catch (error) {
-      console.log('Error al reproducir audio', error);
+      console.error('Error al reproducir audio', error);
     }
   }
 

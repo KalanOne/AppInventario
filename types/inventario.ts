@@ -6,6 +6,7 @@ export type {
   Transaction,
   User,
   TransactionDetail,
+  Almacen,
 };
 
 type ProductsListReponse = [Product[], number];
@@ -34,12 +35,21 @@ interface Article {
   barcode: string;
   multiple: string;
   factor: number;
-  almacen: string | null;
+  warehouse: Almacen;
   createdAt: string;
   updatedAt: string;
   version: number;
   deletedDate: any;
   product: Product;
+}
+
+interface Almacen {
+  id: number;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+  deletedDate: any;
 }
 
 interface Transaction {

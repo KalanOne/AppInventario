@@ -10,26 +10,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { Flex } from '@/components/UI/Flex';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
-import { useStorageState } from '@/hooks/useStorageState';
-import { useNotification } from '@/stores/notificationStore';
-import { useSessionStore } from '@/stores/sessionStore';
+import { Flex } from '@/components/UI/Flex';
 
 export default function HomeScreen() {
   const color = useAppTheme();
-  const addNotification = useNotification((state) => state.addNotification);
-  const signOut = useSessionStore((state) => state.signOut);
-  const session = useSessionStore((state) => state.session);
-  const [[isLoadingJwt, jwt], setJwt] = useStorageState(
-    process.env.EXPO_PUBLIC_TOKEN_SECRET ?? 'TOKEN_SECRET'
-  );
-  const [[isLoadingEmail, email], setEmail] = useStorageState(
-    process.env.EXPO_PUBLIC_EMAIL_SECRET ?? 'EMAIL_SECRET'
-  );
   const handPositionX = useSharedValue(0);
 
-  // Animación para mover la mano de izquierda a derecha
   handPositionX.value = withRepeat(
     withSequence(withTiming(50, { duration: 1500, easing: Easing.bounce })),
     20

@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
-import { UseMutationResult, UseQueryResult } from "@tanstack/react-query";
-import { useProgressStore } from "@/stores/progress";
-
+import { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import { useProgressStore } from '@/stores/progress';
 
 export { useProgressQuery, useProgressMutation };
 
@@ -16,12 +15,15 @@ function useProgressQuery(query: UseQueryResult, id: string) {
     } else {
       removeProgress(id);
     }
+    return () => {
+      removeProgress(id);
+    };
   }, [query.isFetching]);
 }
 
 function useProgressMutation(
   mutation: UseMutationResult<any, any, any, any>,
-  id: string,
+  id: string
 ) {
   const addProgress = useProgressStore((state) => state.addProgress);
   const removeProgress = useProgressStore((state) => state.removeProgress);
@@ -32,5 +34,8 @@ function useProgressMutation(
     } else {
       removeProgress(id);
     }
+    return () => {
+      removeProgress(id);
+    };
   }, [mutation.isPending]);
 }

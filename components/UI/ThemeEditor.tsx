@@ -34,7 +34,6 @@ export function ThemeEditor() {
   const { changeTheme: setUseDefaultTheme, defaultTheme: useDefaultTheme } =
     useThemeStore();
 
-  // const [useDefaultTheme, setUseDefaultTheme] = useState<boolean>(true);
   const [sourceColor, setSourceColor] = useState<string | undefined>(undefined);
 
   const handleUseDefaultThemeChange = (value: boolean) => {

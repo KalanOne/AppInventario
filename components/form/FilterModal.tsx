@@ -1,10 +1,10 @@
 import { ReactNode, useState } from 'react';
+import { FormProvider, UseFormReturn } from 'react-hook-form';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Button, Modal, Portal, Text } from 'react-native-paper';
 
-import { Flex } from '../UI/Flex';
 import { useAppTheme } from '../providers/Material3ThemeProvider';
-import { FormProvider, UseFormReturn } from 'react-hook-form';
+import { Flex } from '../UI/Flex';
 
 export { FilterModal };
 

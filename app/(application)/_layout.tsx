@@ -1,31 +1,14 @@
-import { router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { useEffect } from 'react';
-import { BackHandler } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Icon } from 'react-native-paper';
 
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
-import { useStorageState } from '@/hooks/useStorageState';
-import { useNotification } from '@/stores/notificationStore';
-import { useSessionStore } from '@/stores/sessionStore';
+import { FontAwesome } from '@expo/vector-icons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
-
-export const unstable_settings = {
-  initialRouteName: 'home',
-};
 
 export default function DrawerLayout() {
   const colors = useAppTheme();
-  const addNotification = useNotification((state) => state.addNotification);
-  const [[isLoadingJwt, jwt], setJwt] = useStorageState(
-    process.env.EXPO_PUBLIC_TOKEN_SECRET ?? 'TOKEN_SECRET'
-  );
-  const [[isLoadingEmail, email], setEmail] = useStorageState(
-    process.env.EXPO_PUBLIC_EMAIL_SECRET ?? 'EMAIL_SECRET'
-  );
-  const session = useSessionStore((state) => state.session);
 
   // Evitar de ir hacia atras
   // useEffect(() => {
@@ -51,14 +34,6 @@ export default function DrawerLayout() {
   //   return () => backHandler.remove();
   // }, []);
 
-  useEffect(() => {
-    if (!session) {
-      setJwt(null);
-      setEmail(null);
-      router.dismissAll();
-    }
-  }, [session]);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
@@ -73,6 +48,7 @@ export default function DrawerLayout() {
           },
           drawerContentStyle: {
             backgroundColor: colors.colors.surfaceContainer,
+            // paddingTop: 25,
           },
           drawerInactiveTintColor: colors.colors.secondary,
           drawerActiveTintColor: colors.colors.primary,
@@ -101,16 +77,21 @@ export default function DrawerLayout() {
             drawerLabel: 'User',
             title: 'User',
             drawerIcon: ({ color, focused, size }) => (
-              // <FontAwesome5
-              //   name={focused ? 'user-alt' : 'user'}
-              //   size={size*0.8}
-              //   color={color}
-              // />
               <FontAwesome
                 name={focused ? 'user-circle' : 'user-circle-o'}
                 size={size}
                 color={color}
               />
+            ),
+          }}
+        />
+        <Drawer.Screen
+          name="almacenes"
+          options={{
+            drawerLabel: 'Almacenes',
+            title: 'Almacenes',
+            drawerIcon: ({ color, size }) => (
+              <Icon source={'warehouse'} color={color} size={size} />
             ),
           }}
         />

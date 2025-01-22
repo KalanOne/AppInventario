@@ -7,6 +7,7 @@ import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Flex } from '@/components/UI/Flex';
 import { useCrud, useCrudQuery } from '@/hooks/crud';
+import { useDependencies } from '@/hooks/dependencies';
 import { Product as ProductResponse } from '@/types/inventario';
 import { Product } from '@/types/searchs';
 import { deleteEmptyProperties } from '@/utils/other';
@@ -52,6 +53,8 @@ export default function ProductList() {
     extras: undefined,
   });
   const products = productsListQuery.data ? productsListQuery.data[0] : [];
+
+  const dependencies = useDependencies(['warehouses'], {}, ['warehouses']);
 
   const productFilterForm = useForm<
     ProductFilterInputType,
@@ -271,7 +274,13 @@ export default function ProductList() {
             !multipleFilter ? '1' : multipleFilter === 'UNIDAD' ? '1' : '12'
           }
         />
-        <CTextInput name="almacen" label="Almacen" />
+        <CDropdownInput
+          name="warehouse"
+          label="Almacen"
+          data={dependencies.warehouses ?? []}
+          labelField={'name'}
+          valueField={'id'}
+        />
         <CTextInput
           name="serialNumber"
           label="Serial number"
@@ -327,7 +336,7 @@ const productFilterSchema = z.object({
   barcode: z.string().optional(),
   multiple: z.union([z.string(), z.null()]).optional(),
   factor: z.union([z.number(), z.literal('')]).optional(),
-  almacen: z.string().optional(),
+  warehouse: z.union([z.number(), z.null(), z.literal('')]).optional(),
   serialNumber: z.string().optional(),
 });
 
@@ -342,6 +351,6 @@ const productFilterDefaultValues: ProductFilterInputType = {
   barcode: '',
   multiple: '',
   factor: '',
-  almacen: '',
+  warehouse: '',
   serialNumber: '',
 };
