@@ -1,4 +1,4 @@
-import { getProductsList } from '@/api/inventario.api';
+import { getInventoryReport, getProductsList } from '@/api/inventario.api';
 import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';
@@ -6,11 +6,12 @@ import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
 import { Scanner } from '@/components/scanner/Scanner';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Flex } from '@/components/UI/Flex';
+import { useCommonMutation } from '@/hooks/commonQuery';
 import { useCrud, useCrudQuery } from '@/hooks/crud';
 import { useDependencies } from '@/hooks/dependencies';
 import { Product as ProductResponse } from '@/types/inventario';
 import { Product } from '@/types/searchs';
-import { deleteEmptyProperties } from '@/utils/other';
+import { blobToBase64, deleteEmptyProperties } from '@/utils/other';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -21,11 +22,17 @@ import {
   DataTable,
   Divider,
   IconButton,
+  Modal,
+  Portal,
   Searchbar,
   Text,
   TextInput,
 } from 'react-native-paper';
 import { z } from 'zod';
+import * as FileSystem from 'expo-file-system';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import { useNotification } from '@/stores/notificationStore';
 
 export default function ProductList() {
   const color = useAppTheme();
@@ -40,6 +47,11 @@ export default function ProductList() {
     origin: null,
     input: null,
   });
+  const [fullInventoryModal, setFullInventoryModal] = useState(false);
+  const [actionPdf, setActionPdf] = useState<'share' | 'print' | 'save'>(
+    'print'
+  );
+  const addNotification = useNotification((state) => state.addNotification);
 
   const crud = useCrud();
   const productsListQuery = useCrudQuery({
@@ -68,6 +80,72 @@ export default function ProductList() {
   const [multipleFilter] = useWatch({
     control: productFilterForm.control,
     name: ['multiple'],
+  });
+
+  const transactionReportMutation = useCommonMutation(getInventoryReport, '', {
+    onSuccess: async (response) => {
+      try {
+        const base64Data = await blobToBase64(response);
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+
+        const dateString = `${day}-${month}-${year}_${hours}-${minutes}-${seconds}`;
+        if (actionPdf === 'print') {
+          await Print.printAsync({
+            uri: `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64Data}`,
+          });
+        } else if (actionPdf === 'share') {
+          const fileUri = `${FileSystem.cacheDirectory}reporte_inventario_${dateString}.xlsx`;
+
+          await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          await Sharing.shareAsync(fileUri, {
+            mimeType:
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            dialogTitle: 'Compartir reporte de inventario',
+            UTI: 'org.openxmlformats.spreadsheetml.sheet',
+          });
+        } else if (actionPdf === 'save') {
+          const permissions =
+            await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (!permissions.granted) {
+            addNotification({
+              message: 'Permiso denegado para guardar el archivo',
+              code: '',
+            });
+            return;
+          }
+          const uri = await FileSystem.StorageAccessFramework.createFileAsync(
+            permissions.directoryUri,
+            `reporte_inventario_${dateString}`,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          );
+          await FileSystem.StorageAccessFramework.writeAsStringAsync(
+            uri,
+            base64Data,
+            {
+              encoding: FileSystem.EncodingType.Base64,
+            }
+          );
+          addNotification({
+            message: 'Archivo guardado exitosamente',
+            code: '',
+          });
+        }
+      } catch (e) {
+        addNotification({
+          message: `Error al ${actionPdf == 'print' ? 'imprimir' : actionPdf == 'save' ? 'guardar' : 'compartir'} el archivo`,
+          code: '',
+        });
+      }
+    },
   });
 
   function handleBarcodeScanClick(
@@ -140,6 +218,16 @@ export default function ProductList() {
     });
   }
 
+  function shareReport() {
+    setActionPdf('share');
+    transactionReportMutation.mutate();
+  }
+
+  function saveReport() {
+    setActionPdf('save');
+    transactionReportMutation.mutate();
+  }
+
   useEffect(() => {
     if (products) {
       crud.setTotal(productsListQuery.data ? productsListQuery.data[1] : 0);
@@ -175,6 +263,13 @@ export default function ProductList() {
           icon="open-in-new"
           onPress={() => {
             setProductSearch(true);
+          }}
+          mode="contained"
+        />
+        <IconButton
+          icon="receipt"
+          onPress={() => {
+            setFullInventoryModal(true);
           }}
           mode="contained"
         />
@@ -305,6 +400,34 @@ export default function ProductList() {
         handleSearchDismissCancel={() => setProductSearch(false)}
         handleFoundProduct={handleFoundProduct}
       />
+      <Portal>
+        <Modal
+          visible={fullInventoryModal}
+          onDismiss={() => setFullInventoryModal(false)}
+          contentContainerStyle={[
+            styles.containerStyle,
+            { backgroundColor: color.colors.surfaceBright },
+          ]}
+        >
+          <Flex paddingX={10}>
+            <Text variant="titleLarge" style={{ marginBottom: 10 }}>
+              Reporte de inventario
+            </Text>
+            <Flex direction="row" justify="center">
+              <IconButton
+                icon="share-variant"
+                mode="contained"
+                onPress={shareReport}
+              />
+              <IconButton
+                icon="content-save"
+                mode="contained"
+                onPress={saveReport}
+              />
+            </Flex>
+          </Flex>
+        </Modal>
+      </Portal>
     </Flex>
   );
 }
@@ -326,6 +449,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  containerStyle: {
+    padding: 10,
+    margin: 10,
+    borderRadius: 10,
+    elevation: 5,
+    // backgroundColor: 'white', // o usa `color.colors.surfaceBright` si ya está en el modal
+    alignSelf: 'center',
+    width: '90%', // opcional: controla el ancho, pero no altura
   },
 });
 
