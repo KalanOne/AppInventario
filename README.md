@@ -7,10 +7,10 @@
 </p>
 
 <div align="center">
-  <img src="https://img.shields.io/github/last-commit/KalanOne/Chatbot?color=4ade80&label=Last%20Commit&style=flat-square" alt="Last Commit" style="border-radius:5px" />
-  <img src="https://img.shields.io/github/stars/KalanOne/Chatbot?style=flat-square&color=facc15" alt="Stars" style="border-radius:5px" />
-  <img src="https://img.shields.io/github/issues/KalanOne/Chatbot?style=flat-square&color=ef4444" alt="Issues" style="border-radius:5px" />
-  <img src="https://img.shields.io/github/license/KalanOne/Chatbot?style=flat-square&color=6366f1" alt="License" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/last-commit/KalanOne/AppInventario?color=4ade80&label=Last%20Commit&style=flat-square" alt="Last Commit" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/stars/KalanOne/AppInventario?style=flat-square&color=facc15" alt="Stars" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/issues/KalanOne/AppInventario?style=flat-square&color=ef4444" alt="Issues" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/license/KalanOne/AppInventario?style=flat-square&color=6366f1" alt="License" style="border-radius:5px" />
 </div>
 
 ---
@@ -65,18 +65,6 @@ npx expo start
 ✅ Manejo de afectaciones configurables  
 ✅ Reportes en tiempo real  
 ✅ App móvil para compartir/exportar reportes  
-
----
-
-## ⚙️ PM2 (producción)
-
-```bash
-# Iniciar todos los procesos
-pm2 start pm2.config.js
-
-# Reiniciar todos (con cambios)
-pm2 restart all
-```
 
 ---
 
