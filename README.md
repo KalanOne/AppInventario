@@ -1,50 +1,94 @@
-# Welcome to your Expo app 👋
+# 📦 Sistema de Gestión de Inventario
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<p align="center">
+  <img src="ScreenShots/Android Inventory.png" alt="Chat visual" width="30%" style="border-radius: 25px; margin-right: 10px;" />
+  <img src="ScreenShots/Android Inventory Product.png" alt="Recursos de ayuda" width="30%" style="border-radius: 25px; margin: 0 10px;" />
+  <img src="ScreenShots/Android New Transaction.png" alt="Descubrir" width="30%" style="border-radius: 25px; margin-left: 10px;" />
+</p>
 
-## Get started
+<div align="center">
+  <img src="https://img.shields.io/github/last-commit/KalanOne/Chatbot?color=4ade80&label=Last%20Commit&style=flat-square" alt="Last Commit" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/stars/KalanOne/Chatbot?style=flat-square&color=facc15" alt="Stars" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/issues/KalanOne/Chatbot?style=flat-square&color=ef4444" alt="Issues" style="border-radius:5px" />
+  <img src="https://img.shields.io/github/license/KalanOne/Chatbot?style=flat-square&color=6366f1" alt="License" style="border-radius:5px" />
+</div>
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+> Plataforma moderna y escalable para el **registro, control y exportación de inventario**, con arquitectura **backend en NestJS** y **frontend en React Native + Expo**. Incluye **reportes Excel**, gestión de transacciones, almacenes y control por número de serie.
 
-2. Start the app
+---
 
-   ```bash
-    npx expo start
-   ```
+## 🧩 Tecnologías
 
-In the output, you'll find options to open the app in a
+### [Backend](https://github.com/KalanOne/AppInventarioBack) - [NestJS](https://nestjs.com/)
+- PostgreSQL + TypeORM
+- PM2 para despliegue
+- Generación de reportes Excel (`exceljs`)
+- Validaciones por transacciones
+- Agrupación por código de barras y seriales
+- Afectaciones configurables (entrada/salida con o sin impacto)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Frontend - [React Native + Expo](https://expo.dev/)
+- React Native Paper UI
+- Soporte para dark theme y diversos colores
+- Compartir o guardar reportes (`expo-sharing`)
+- Soporte multiplataforma (Android / iOS / Web)
+- Visualización moderna del inventario
+- Flexbox + Portales + Modal dinámico
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
-
-When you're ready, run:
+## 🚀 Instalación rápida
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## 📤 Reportes Excel
 
-To learn more about developing your project with Expo, look at the following resources:
+- **Agrupación por artículo y almacén**
+- **Total de unidades** (ajustado por factor y múltiplo)
+- **Listado de números de serie**
+- Compatible con **Microsoft Excel**, **Google Sheets**, y otros
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## 📦 Funcionalidades destacadas
 
-Join our community of developers creating universal apps.
+✅ Soporte multi-almacén  
+✅ Transacciones de entrada y salida  
+✅ Control de productos con y sin número de serie  
+✅ Manejo de afectaciones configurables  
+✅ Reportes en tiempo real  
+✅ App móvil para compartir/exportar reportes  
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## ⚙️ PM2 (producción)
+
+```bash
+# Iniciar todos los procesos
+pm2 start pm2.config.js
+
+# Reiniciar todos (con cambios)
+pm2 restart all
+```
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT - [Ver aquí](LICENSE)
+
+---
+
+## 👨‍💻 Autor
+
+Desarrollado con ❤️ por **[Tu Nombre o Equipo]**  
+Contáctame en [alangarciadiazgardy@gmail.com](mailto:alangarciadiazgardy@gmail.com) o en [LinkedIn](https://www.linkedin.com/in/alan-garcia-diaz-811428264/)
+
+---
