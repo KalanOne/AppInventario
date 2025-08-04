@@ -22,7 +22,7 @@ import { useAppTheme } from '../providers/Material3ThemeProvider';
 import { router, useFocusEffect } from 'expo-router';
 import { useNotification } from '@/stores/notificationStore';
 import { format } from '@formkit/tempo';
-import { Scanner } from '../scanner/Scanner';
+import { Scanner2 } from '../scanner/Scanner2';
 
 export { TransactionsSearch };
 
@@ -380,7 +380,7 @@ function TransactionsSearch({
           </Flex>
         </Flex>
       </Modal>
-      <Scanner
+      <Scanner2
         visible={barcodeScan.modal}
         onDismissCancel={() =>
           setBarcodeScan((prev) => ({ ...prev, modal: false }))

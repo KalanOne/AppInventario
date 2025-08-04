@@ -17,7 +17,7 @@ import { Flex } from '../UI/Flex';
 import { Dropdown } from 'react-native-element-dropdown';
 import { AntDesign } from '@expo/vector-icons';
 import { Article, FormattedArticle } from '@/types/searchs';
-import { Scanner } from '../scanner/Scanner';
+import { Scanner2 } from '../scanner/Scanner2';
 import { useNotification } from '@/stores/notificationStore';
 import { router, useFocusEffect } from 'expo-router';
 
@@ -367,7 +367,7 @@ function ArticlesSearch({
           </Flex>
         </Flex>
       </Modal>
-      <Scanner
+      <Scanner2
         visible={barcodeScan.modal}
         onDismissCancel={() =>
           setBarcodeScan((prev) => ({ ...prev, modal: false }))

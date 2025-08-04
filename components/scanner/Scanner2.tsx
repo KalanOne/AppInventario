@@ -1,6 +1,6 @@
 import { Audio } from 'expo-av';
 import { BarcodeScanningResult, CameraView } from 'expo-camera';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Keyboard, LayoutChangeEvent, StyleSheet, View } from 'react-native';
 import {
   Button,
@@ -37,6 +37,7 @@ function Scanner2({
     width: number;
     height: number;
   } | null>(null);
+  // const scanLinePosition = useSharedValue(0);
 
   function onCameraLayout(event: LayoutChangeEvent) {
     const { width, height } = event.nativeEvent.layout;
@@ -168,61 +169,66 @@ function Scanner2({
     resetScanner();
   }
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 0.7,
-      backgroundColor: color.colors.surfaceBright,
-      elevation: 5,
-      margin: 10,
-      borderRadius: 10,
-      overflow: 'hidden',
-    },
-    camera: {
-      borderRadius: 10,
-      flex: 1,
-      justifyContent: 'flex-end',
-    },
-    buttonContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    resultsDiffContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    selectResultContainer: {
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      margin: 10,
-    },
-    scannerOverlay: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    scannerFrame: {
-      width: '60%',
-      height: '30%',
-      borderWidth: 2,
-      borderColor: 'rgba(255, 255, 255, 0.7)',
-      backgroundColor: 'rgba(0, 0, 0, 0.2)',
-      borderRadius: 10,
-    },
-    scannerAnimation: {
-      position: 'absolute',
-      height: 2,
-      width: '100%',
-      backgroundColor: 'rgba(0, 255, 0, 0.7)',
-    },
-  });
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 0.7,
+          backgroundColor: color.colors.surfaceBright,
+          elevation: 5,
+          margin: 10,
+          borderRadius: 10,
+          overflow: 'hidden',
+        },
+        camera: {
+          borderRadius: 10,
+          flex: 1,
+          justifyContent: 'flex-end',
+        },
+        buttonContainer: {
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        resultsDiffContainer: {
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        selectResultContainer: {
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          margin: 10,
+        },
+        scannerOverlay: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        scannerFrame: {
+          width: '60%',
+          height: '30%',
+          borderWidth: 2,
+          borderColor: 'rgba(255, 255, 255, 0.7)',
+          backgroundColor: 'rgba(0, 0, 0, 0.2)',
+          borderRadius: 10,
+          overflow: 'hidden',
+        },
+        scanLine: {
+          height: 2,
+          width: '100%',
+          backgroundColor: 'rgba(0, 255, 0, 0.7)',
+          position: 'absolute',
+        },
+      }),
+    [color.colors.surfaceBright]
+  );
 
   useEffect(() => {
     Keyboard.dismiss();
@@ -235,6 +241,38 @@ function Scanner2({
       };
     }
   }, [sound]);
+
+  // useEffect(() => {
+  //   if (visible) {
+  //     scanLinePosition.value = 0;
+  //     scanLinePosition.value = withRepeat(
+  //       withTiming(1, {
+  //         duration: 2000,
+  //         easing: Easing.ease,
+  //       }),
+  //       -1,
+  //       true
+  //     );
+  //   } else {
+  //     scanLinePosition.value = 0;
+  //   }
+  // }, [visible]);
+
+  // const animatedScanLine = useAnimatedStyle(() => {
+  //   return {
+  //     transform: [
+  //       {
+  //         translateY: interpolate(
+  //           scanLinePosition.value,
+  //           [0, 1],
+  //           [0, (cameraDimensions?.height ?? 100) * 0.3 - 5]
+  //         ),
+  //       },
+  //     ],
+  //     opacity: interpolate(scanLinePosition.value, [0, 0.5, 1], [0.7, 1, 0.7]),
+  //     marginTop: 0,
+  //   };
+  // }, [cameraDimensions]);
 
   return (
     <Portal>
@@ -250,12 +288,11 @@ function Scanner2({
               onBarcodeScanned={barCodeScanned}
               enableTorch={flash}
               zoom={zoom}
-              onLayout={onCameraLayout} // Añade esto
+              onLayout={onCameraLayout}
             >
               <View style={styles.scannerOverlay}>
                 <View style={styles.scannerFrame}>
-                  {/* <View style={[styles.scannerAnimation, { top: 0 }]} />
-                  <View style={[styles.scannerAnimation, { bottom: 0 }]} /> */}
+                  {/* <Animated.View style={[styles.scanLine, animatedScanLine]} /> */}
                 </View>
               </View>
               <Flex style={styles.buttonContainer}>

@@ -22,8 +22,7 @@ import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';
 import { UpdateModal } from '@/components/form/UpdateModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
-// import { Scanner } from '@/components/scanner/Scanner';
-import { Scanner2 as Scanner } from '@/components/scanner/Scanner2';
+import { Scanner2 } from '@/components/scanner/Scanner2';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { useCrud, useCrudMutationF, useCrudQuery } from '@/hooks/crud';
 import {
@@ -562,7 +561,7 @@ export default function ArticulosScreen() {
         }
         handleFoundProduct={handleFoundProduct}
       />
-      <Scanner
+      <Scanner2
         visible={barcodeScan.modal}
         onDismissCancel={() =>
           setBarcodeScan((prev) => ({ ...prev, modal: false }))

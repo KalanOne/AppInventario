@@ -3,7 +3,7 @@ import { CDropdownInput } from '@/components/form/CDropdownInput';
 import { CTextInput } from '@/components/form/CTextInput';
 import { FilterModal } from '@/components/form/FilterModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
-import { Scanner } from '@/components/scanner/Scanner';
+import { Scanner2 } from '@/components/scanner/Scanner2';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Flex } from '@/components/UI/Flex';
 import { useCommonMutation } from '@/hooks/commonQuery';
@@ -388,7 +388,7 @@ export default function ProductList() {
           }
         />
       </FilterModal>
-      <Scanner
+      <Scanner2
         visible={barcodeScan.modal}
         onDismissCancel={() =>
           setBarcodeScan((prev) => ({ ...prev, modal: false }))

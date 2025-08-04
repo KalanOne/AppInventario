@@ -31,7 +31,7 @@ import { CreateModal } from '@/components/form/CreateModal';
 import { CTextInput } from '@/components/form/CTextInput';
 import { UpdateModal } from '@/components/form/UpdateModal';
 import { useAppTheme } from '@/components/providers/Material3ThemeProvider';
-import { Scanner } from '@/components/scanner/Scanner';
+import { Scanner2 } from '@/components/scanner/Scanner2';
 import { ArticlesSearch } from '@/components/Searchs/ArticlesSearch';
 import { ProductsSearch } from '@/components/Searchs/ProductsSearch';
 import { Flex } from '@/components/UI/Flex';
@@ -829,7 +829,7 @@ export default function NuevaTransaccionScreen() {
         }}
         handleFoundArticle={handleFoundArticle}
       />
-      <Scanner
+      <Scanner2
         visible={barcodeScan.modal}
         onDismissCancel={() =>
           setBarcodeScan((prev) => ({ ...prev, modal: false }))
