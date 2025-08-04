@@ -29,6 +29,7 @@ function UpdateModal({
 }: UpdateModalProps) {
   const color = useAppTheme();
   const [isProcessing, setIsProcessing] = useState(false);
+
   const styles = StyleSheet.create({
     containerStyle: {
       backgroundColor: color.colors.surfaceBright,
@@ -51,6 +52,7 @@ function UpdateModal({
       // paddingHorizontal: 10,
     },
   });
+
   async function handleUpdateApplyLocal() {
     if (handleUpdateApply) {
       setIsProcessing(true);

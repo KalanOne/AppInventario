@@ -152,6 +152,20 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
+          name="config"
+          options={{
+            drawerLabel: 'Configuración',
+            title: 'Configuración',
+            drawerIcon: ({ color, focused, size }) => (
+              <TabBarIcon
+                name={focused ? 'cog' : 'cog-outline'}
+                color={color}
+                size={size}
+              />
+            ),
+          }}
+        />
+        <Drawer.Screen
           name="logout"
           options={{
             drawerLabel: 'Logout',

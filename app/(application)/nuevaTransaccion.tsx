@@ -1,5 +1,5 @@
 import * as Print from 'expo-print';
-import { SetStateAction, useCallback, useState } from 'react';
+import { SetStateAction, useCallback, useMemo, useState } from 'react';
 import {
   FormProvider,
   useFieldArray,
@@ -135,6 +135,15 @@ export default function NuevaTransaccionScreen() {
     name: ['multiple'],
   });
 
+  const transactionFilterForm = useForm<
+    TransactionFilterInputType,
+    unknown,
+    TransactionFilterSchemaType
+  >({
+    defaultValues: transactionFilterDefaultValues,
+    resolver: zodResolver(transactionFilterSchema),
+  });
+
   const transactionUnitUpdateForm = useForm<
     TransactionUnitInputType,
     unknown,
@@ -153,6 +162,39 @@ export default function NuevaTransaccionScreen() {
     control: transactionCreateForm.control,
     name: ['type', 'units'],
   });
+
+  const [filter] = useWatch({
+    control: transactionFilterForm.control,
+    name: ['filter'],
+  });
+
+  const filteredUnits = useMemo(
+    () =>
+      units.filter((unit) => {
+        if (!filter) return true;
+        return (
+          unit.name.toLowerCase().includes(filter.toLowerCase()) ||
+          unit.barcode.toLowerCase().includes(filter.toLowerCase()) ||
+          (unit.serial &&
+            unit.serial.toLowerCase().includes(filter.toLowerCase())) ||
+          // (unit.productId &&
+          //   unit.productId
+          //     .toString()
+          //     .toLowerCase()
+          //     .includes(filter.toLowerCase())) ||
+          // (unit.articleId &&
+          //   unit.articleId
+          //     .toString()
+          //     .toLowerCase()
+          //     .includes(filter.toLowerCase())) ||
+          unit.description.toLowerCase().includes(filter.toLowerCase()) ||
+          unit.multiple.toLowerCase().includes(filter.toLowerCase()) ||
+          unit.factor.toString().toLowerCase().includes(filter.toLowerCase()) ||
+          unit.quantity.toString().toLowerCase().includes(filter.toLowerCase())
+        );
+      }),
+    [units, filter]
+  );
 
   const transactionCreateMutation = useCrudMutationF(
     createTransactions,
@@ -432,16 +474,16 @@ export default function NuevaTransaccionScreen() {
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       {/* Main Content - Table, Form */}
-      <FormProvider {...transactionCreateForm}>
-        <Flex
-          style={{
-            paddingTop: 10,
-            paddingRight: 10,
-            paddingBottom: 0,
-            paddingLeft: 10,
-          }}
-          flex={1}
-        >
+      <Flex
+        style={{
+          paddingTop: 10,
+          paddingRight: 10,
+          paddingBottom: 0,
+          paddingLeft: 10,
+        }}
+        flex={1}
+      >
+        <FormProvider {...transactionCreateForm}>
           <TextInput
             value={date ? `${date.toLocaleDateString()}` : ''}
             right={
@@ -491,6 +533,7 @@ export default function NuevaTransaccionScreen() {
               variant="titleMedium"
             >
               {type == 'ENTRY' ? 'Productos a ingresar' : 'Productos a egresar'}
+              : {units.length}
             </Text>
             <IconButton
               icon="send"
@@ -502,71 +545,84 @@ export default function NuevaTransaccionScreen() {
               disabled={!transactionCreateForm.formState.isValid}
             />
           </Flex>
-          <DataTable
-            style={{
-              flex: 1,
-              // Lo siguiente es para que tome el 100% del ancho
-              marginHorizontal: -10,
-              width: '110%',
-            }}
-          >
-            <DataTable.Header>
-              <DataTable.Title style={styles.columLong}>
-                Product name
-              </DataTable.Title>
-              <DataTable.Title style={styles.columnMid}>
-                Multiple
-              </DataTable.Title>
-              <DataTable.Title style={styles.columnShort} numeric>
-                Quantity
-              </DataTable.Title>
-              <DataTable.Title
-                style={[styles.columnShort, { justifyContent: 'center' }]}
-              >
-                Actions
-              </DataTable.Title>
-            </DataTable.Header>
-            <ScrollView style={styles.scrollView}>
-              {units.length > 0 &&
-                units.map((item, index) => (
-                  <DataTable.Row
-                    key={index}
-                    onPress={() => {
-                      handleRowPress(item, index);
-                    }}
+        </FormProvider>
+        <FormProvider {...transactionFilterForm}>
+          <CTextInput
+            label={
+              'Buscar producto por nombre, barcode, serial, etc. dentro de la lista'
+            }
+            name="filter"
+            right={
+              <TextInput.Icon
+                icon={filter ? 'filter' : 'filter-off'}
+                onPress={() => transactionFilterForm.setValue('filter', '')}
+                mode="contained"
+              />
+            }
+          />
+        </FormProvider>
+        <DataTable
+          style={{
+            flex: 1,
+            // Lo siguiente es para que tome el 100% del ancho
+            marginHorizontal: -10,
+            width: '110%',
+          }}
+        >
+          <DataTable.Header>
+            <DataTable.Title style={styles.columLong}>
+              Product name
+            </DataTable.Title>
+            <DataTable.Title style={styles.columnMid}>Multiple</DataTable.Title>
+            <DataTable.Title style={styles.columnShort} numeric>
+              Quantity
+            </DataTable.Title>
+            <DataTable.Title
+              style={[styles.columnShort, { justifyContent: 'center' }]}
+            >
+              Actions
+            </DataTable.Title>
+          </DataTable.Header>
+          <ScrollView style={styles.scrollView}>
+            {filteredUnits.length > 0 &&
+              filteredUnits.map((item, index) => (
+                <DataTable.Row
+                  key={index}
+                  onPress={() => {
+                    handleRowPress(item, index);
+                  }}
+                >
+                  <DataTable.Cell style={styles.columLong}>
+                    {item.name}
+                  </DataTable.Cell>
+                  <DataTable.Cell style={styles.columnMid}>
+                    {item.multiple} - {item.factor}
+                  </DataTable.Cell>
+                  <DataTable.Cell style={styles.columnShort} numeric>
+                    {item.quantity}
+                  </DataTable.Cell>
+                  <DataTable.Cell
+                    style={[styles.columnShort, { justifyContent: 'center' }]}
+                    numeric
                   >
-                    <DataTable.Cell style={styles.columLong}>
-                      {item.name}
-                    </DataTable.Cell>
-                    <DataTable.Cell style={styles.columnMid}>
-                      {item.multiple} - {item.factor}
-                    </DataTable.Cell>
-                    <DataTable.Cell style={styles.columnShort} numeric>
-                      {item.quantity}
-                    </DataTable.Cell>
-                    <DataTable.Cell
-                      style={[styles.columnShort, { justifyContent: 'center' }]}
-                      numeric
-                    >
-                      <IconButton
-                        icon={'delete'}
-                        onPress={() => removeUnit(item, index)}
-                        mode="contained"
-                      />
-                    </DataTable.Cell>
-                  </DataTable.Row>
-                ))}
-              {!units.length && (
-                <DataTable.Row>
-                  <DataTable.Cell centered style={styles.columnNoData}>
-                    No data
+                    <IconButton
+                      icon={'delete'}
+                      onPress={() => removeUnit(item, index)}
+                      mode="contained"
+                    />
                   </DataTable.Cell>
                 </DataTable.Row>
-              )}
-            </ScrollView>
-          </DataTable>
-        </Flex>
-      </FormProvider>
+              ))}
+            {!filteredUnits.length && (
+              <DataTable.Row>
+                <DataTable.Cell centered style={styles.columnNoData}>
+                  No data
+                </DataTable.Cell>
+              </DataTable.Row>
+            )}
+          </ScrollView>
+        </DataTable>
+      </Flex>
       {/* Create Modal */}
       <CreateModal
         form={transactionUnitCreateForm}
@@ -1042,6 +1098,18 @@ const transactionCreateDefaultValues: TransactionCreateInputType = {
   emitter: '',
   folio: '',
   units: [],
+};
+
+const transactionFilterSchema = z.object({
+  filter: z.string().optional(),
+});
+
+type TransactionFilterSchemaType = z.infer<typeof transactionFilterSchema>;
+
+type TransactionFilterInputType = z.input<typeof transactionFilterSchema>;
+
+const transactionFilterDefaultValues: TransactionFilterInputType = {
+  filter: '',
 };
 
 const styles = StyleSheet.create({
