@@ -135,8 +135,6 @@ function Scanner2({
       cameraDimensions
     );
 
-    console.log('Is in center area:', isInCenterArea);
-
     if (isInCenterArea) {
       playSound();
       if (scanningResult.raw) {

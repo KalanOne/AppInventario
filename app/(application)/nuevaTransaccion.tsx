@@ -64,7 +64,7 @@ export default function NuevaTransaccionScreen() {
   }>({ modal: false, origin: null });
   const [barcodeScan, setBarcodeScan] = useState<{
     modal: boolean;
-    origin: 'update' | 'add' | null;
+    origin: 'update' | 'add' | 'filter' | null;
     input: 'barcode' | 'serial' | null;
   }>({
     modal: false,
@@ -383,8 +383,8 @@ export default function NuevaTransaccionScreen() {
   }
 
   function handleBarcodeScanClick(
-    origin: 'add' | 'update',
-    input: 'barcode' | 'serial'
+    origin: Exclude<typeof barcodeScan.origin, null>,
+    input: Exclude<typeof barcodeScan.input, null>
   ) {
     setBarcodeScan({ modal: true, origin, input });
   }
@@ -404,6 +404,8 @@ export default function NuevaTransaccionScreen() {
         transactionUnitUpdateForm.setValue('serial', barcode);
         transactionUnitUpdateForm.setValue('quantity', 1);
       }
+    } else if (barcodeScan.origin === 'filter') {
+      transactionFilterForm.setValue('filter', barcode);
     }
     setBarcodeScan((prev) => ({ ...prev, modal: false }));
   }
@@ -474,14 +476,13 @@ export default function NuevaTransaccionScreen() {
   return (
     <Flex flex={1} backgroundColor={color.colors.background}>
       {/* Main Content - Table, Form */}
-      <Flex
+      <ScrollView
         style={{
           paddingTop: 10,
           paddingRight: 10,
           paddingBottom: 0,
           paddingLeft: 10,
         }}
-        flex={1}
       >
         <FormProvider {...transactionCreateForm}>
           <TextInput
@@ -552,10 +553,17 @@ export default function NuevaTransaccionScreen() {
               'Buscar producto por nombre, barcode, serial, etc. dentro de la lista'
             }
             name="filter"
-            right={
+            left={
               <TextInput.Icon
                 icon={filter ? 'filter' : 'filter-off'}
                 onPress={() => transactionFilterForm.setValue('filter', '')}
+                mode="contained"
+              />
+            }
+            right={
+              <TextInput.Icon
+                icon="barcode-scan"
+                onPress={() => handleBarcodeScanClick('filter', 'barcode')}
                 mode="contained"
               />
             }
@@ -565,8 +573,8 @@ export default function NuevaTransaccionScreen() {
           style={{
             flex: 1,
             // Lo siguiente es para que tome el 100% del ancho
-            marginHorizontal: -10,
-            width: '110%',
+            // marginHorizontal: -10,
+            // width: '100%',
           }}
         >
           <DataTable.Header>
@@ -622,7 +630,7 @@ export default function NuevaTransaccionScreen() {
             )}
           </ScrollView>
         </DataTable>
-      </Flex>
+      </ScrollView>
       {/* Create Modal */}
       <CreateModal
         form={transactionUnitCreateForm}
@@ -1114,7 +1122,8 @@ const transactionFilterDefaultValues: TransactionFilterInputType = {
 
 const styles = StyleSheet.create({
   scrollView: {
-    maxHeight: '100%',
+    // maxHeight: '100%',
+    flex: 1,
   },
   columLong: {
     // flex: 3,

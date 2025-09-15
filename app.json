@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/images/splash-invent.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#782aff"
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon-invent.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#782aff"
       },
       "package": "com.anonymous.Inventario",
       "permissions": [

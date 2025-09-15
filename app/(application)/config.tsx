@@ -1,19 +1,13 @@
+import { useState } from 'react';
+import { StyleSheet } from 'react-native';
+import { Button, Modal, Portal } from 'react-native-paper';
+import ColorPicker, { Panel1, Swatches } from 'reanimated-color-picker';
+
 import {
   useAppTheme,
   useMaterial3ThemeContext,
 } from '@/components/providers/Material3ThemeProvider';
 import { Flex } from '@/components/UI/Flex';
-import { StyleSheet } from 'react-native';
-import { Button, Modal, Portal, Text } from 'react-native-paper';
-import { ScrollView } from 'react-native-gesture-handler';
-import ColorPicker, {
-  Panel1,
-  Swatches,
-  Preview,
-  OpacitySlider,
-  HueSlider,
-} from 'reanimated-color-picker';
-import { useState } from 'react';
 
 export default function ConfigScreen() {
   const color = useAppTheme();
@@ -22,8 +16,8 @@ export default function ConfigScreen() {
   const { theme, updateTheme, resetTheme } = useMaterial3ThemeContext();
 
   const onSelectColor = ({ hex }: { hex: string }) => {
-    console.log('Selected color:', hex);
     setSelectedColor(hex);
+    updateTheme(hex.slice(0, 7));
   };
 
   function onDismissModal() {
@@ -85,21 +79,26 @@ export default function ConfigScreen() {
             onDismiss={onDismissModal}
             contentContainerStyle={styles.containerStyle}
           >
+            <Button
+              onPress={resetTheme}
+              mode="contained-tonal"
+              style={{
+                marginBottom: 10,
+              }}
+            >
+              Tema por defecto
+            </Button>
             <ColorPicker
               style={{ width: '70%' }}
               value={theme.light.primary}
               onComplete={onSelectColor}
             >
-              <Preview />
-              <Panel1 />
-              <HueSlider />
-              <OpacitySlider />
               <Swatches />
             </ColorPicker>
 
-            <Button onPress={onApplyColor} mode="contained-tonal">
+            {/* <Button onPress={onApplyColor} mode="contained-tonal">
               Cambiar
-            </Button>
+            </Button> */}
           </Modal>
         </Portal>
       </Flex>
